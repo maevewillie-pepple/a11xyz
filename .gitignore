@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.DS_Store
+.env
+.env.local
+*.log
+playwright-report/
+test-results/
+client/dist/
+server/screenshots/*.png
+!server/screenshots/.gitkeep
+server/contact-submissions/*.json
+!server/contact-submissions/.gitkeep
+

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accessibility fundamentals · Aria</title>
+<link rel="preconnect" href="https://fonts.cdnfonts.com">
+<link href="https://fonts.cdnfonts.com/css/geist-sans" rel="stylesheet">
+<link href="https://fonts.cdnfonts.com/css/geist-mono" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAFAF8; --bg-raised:#FFFFFF; --fg:#17160F; --muted:#5E5B52;
+    --line:#E7E3D9; --line-strong:#D8D3C6; --dot:#DEDACD;
+    --accent-a:#2150C2; --accent-b:#12B3A8;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:'Geist Sans','Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-weight:400; -webkit-font-smoothing:antialiased; line-height:1.5;
+    background-image:radial-gradient(var(--dot) 1px, transparent 1px);
+    background-size:22px 22px;
+  }
+  .mono{ font-family:'Geist Mono','SFMono-Regular',Consolas,monospace; font-weight:400; }
+  a{color:inherit;}
+  :focus-visible{ outline:2px solid transparent; box-shadow:0 0 0 2px var(--bg), 0 0 0 4px var(--accent-a); border-radius:6px; }
+  .skip-link{ position:absolute; left:16px; top:10px; z-index:200; background:var(--fg); color:var(--bg); padding:8px 14px; border-radius:8px; text-decoration:none; font-size:14px; clip-path:inset(50%); width:1px; height:1px; overflow:hidden; white-space:nowrap; }
+  .skip-link:focus{ clip-path:none; width:auto; height:auto; overflow:visible; }
+
+  .wrap{max-width:1080px; margin:0 auto; padding:0 28px;}
+
+  header{ position:sticky; top:0; z-index:50; background:rgba(250,250,248,0.9); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+  nav.wrap{ display:flex; align-items:center; justify-content:space-between; height:68px; }
+  .logo{ display:flex; align-items:center; gap:9px; font-size:17px; letter-spacing:-0.01em; text-decoration:none; }
+  .logo-mark{ width:18px; height:18px; border-radius:50%; background:conic-gradient(from 200deg, var(--accent-a), var(--accent-b)); }
+  .nav-links{ display:flex; align-items:center; gap:30px; font-size:14.5px; color:var(--muted); }
+  .nav-links a{ text-decoration:none; }
+  .nav-links a:hover{ color:var(--fg); }
+  .nav-links a.active{ color:var(--fg); }
+  .nav-cta{ display:inline-flex; align-items:center; gap:6px; background:var(--fg); color:var(--bg); padding:9px 16px; border-radius:999px; font-size:14px; text-decoration:none; white-space:nowrap; }
+  .nav-cta:hover{ opacity:0.85; }
+  @media (max-width:760px){ .nav-links{display:none;} }
+
+  .breadcrumb{ font-size:13px; color:var(--muted); padding:24px 0 0; }
+  .breadcrumb a{ text-decoration:none; }
+  .breadcrumb a:hover{ color:var(--fg); }
+  .reader-head{
+    display:grid; grid-template-columns:minmax(0,1fr) min(280px,34%);
+    gap:24px; align-items:center; padding:14px 0 48px;
+  }
+  .reader-head h1{ font-size:clamp(28px,4.5vw,40px); font-weight:400; letter-spacing:-0.02em; margin:0 0 10px; }
+  .reader-head p{ font-size:15px; color:var(--muted); max-width:560px; margin:0; }
+  .reader-illo{ width:100%; max-width:280px; height:auto;  justify-self:end; pointer-events:none; user-select:none; }
+  @media (max-width:720px){
+    .reader-head{ grid-template-columns:1fr; gap:4px; }
+    .reader-illo{ max-width:200px; justify-self:start; }
+  }
+
+  .reader-layout{ display:grid; grid-template-columns:230px 1fr; gap:40px; padding-bottom:100px; align-items:start; }
+  @media (max-width:820px){ .reader-layout{ grid-template-columns:1fr; } }
+
+  .chapter-sidebar{ position:sticky; top:88px; display:flex; flex-direction:column; gap:2px; }
+  @media (max-width:820px){ .chapter-sidebar{ position:static; flex-direction:row; overflow-x:auto; gap:8px; padding-bottom:6px; } }
+  .chapter-tab{
+    display:flex; align-items:baseline; gap:10px; text-align:left;
+    border:none; background:none; cursor:pointer; font-family:inherit;
+    padding:11px 12px; border-radius:9px; color:var(--muted); font-size:14px;
+    border-left:2px solid transparent;
+  }
+  @media (max-width:820px){ .chapter-tab{ white-space:nowrap; border-left:none; border-bottom:2px solid transparent; } }
+  .chapter-tab .num{ font-family:'Geist Mono',monospace; font-size:11.5px; color:var(--muted); flex:0 0 auto; }
+  .chapter-tab[aria-selected="true"]{ background:var(--bg-raised); color:var(--fg); border-left-color:var(--accent-a); }
+  .chapter-tab[aria-selected="true"] .num{ color:var(--accent-a); }
+  .chapter-tab:hover:not([aria-selected="true"]){ color:var(--fg); }
+
+  .chapter-panel{ display:none; }
+  .chapter-panel[data-active]{ display:block; }
+
+  .prose h2{ font-size:22px; font-weight:400; letter-spacing:-0.015em; margin:0 0 16px; }
+  .prose h3{ font-size:16px; font-weight:400; margin:28px 0 10px; }
+  .prose p{ font-size:15px; color:var(--muted); line-height:1.75; margin:0 0 16px; max-width:620px; }
+  .prose ul{ margin:0 0 16px; padding-left:0; list-style:none; max-width:620px; }
+  .prose ul li{ font-size:14.5px; color:var(--muted); line-height:1.65; padding-left:18px; position:relative; margin-bottom:10px; }
+  .prose ul li::before{ content:''; position:absolute; left:0; top:9px; width:5px; height:5px; border-radius:50%; background:var(--line-strong); }
+  .prose ul li b{ color:var(--fg); font-weight:400; }
+  .prose a{ color:var(--accent-a); text-decoration:underline; text-underline-offset:3px; }
+
+  .type-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:680px; margin-bottom:24px; }
+  @media (max-width:560px){ .type-grid{ grid-template-columns:1fr; } }
+  .type-card{ background:var(--bg-raised); border:1px solid var(--line); border-radius:12px; padding:16px 18px; isolation:isolate; }
+  .type-illo{ width:52px; height:52px; object-fit:contain;  display:block; margin:-6px 0 8px -8px; pointer-events:none; }
+  .type-card h4{ font-size:13.5px; font-weight:400; margin:0 0 5px; }
+  .type-card p{ font-size:12.5px; color:var(--muted); margin:0; line-height:1.5; }
+
+  .stat-strip{ display:flex; gap:24px; flex-wrap:wrap; margin:0 0 28px; }
+  .stat-chip{ background:var(--bg-raised); border:1px solid var(--line); border-radius:12px; padding:14px 18px; }
+  .stat-chip .n{ font-size:20px; font-family:'Geist Mono',monospace; display:block; margin-bottom:2px; }
+  .stat-chip .l{ font-size:12px; color:var(--muted); }
+
+  .case-card{ background:var(--bg-raised); border:1px solid var(--line-strong); border-radius:14px; padding:22px; max-width:620px; margin:20px 0 24px; }
+  .case-card h4{ font-size:14px; font-weight:400; margin:0 0 8px; }
+  .case-card p{ font-size:13.5px; color:var(--muted); line-height:1.65; margin:0; }
+
+  .chapter-nav-footer{ display:flex; justify-content:space-between; gap:16px; margin-top:44px; padding-top:24px; border-top:1px solid var(--line); max-width:680px; }
+  .goto-btn{ display:flex; flex-direction:column; gap:4px; border:none; background:none; cursor:pointer; font-family:inherit; text-align:left; padding:0; }
+  .goto-btn.next{ text-align:right; margin-left:auto; }
+  .goto-btn .label{ font-size:11.5px; color:var(--muted); }
+  .goto-btn .title{ font-size:14px; color:var(--fg); display:flex; align-items:center; gap:6px; }
+  .goto-btn.next .title{ justify-content:flex-end; }
+  .goto-btn:hover .title{ color:var(--accent-a); }
+  .goto-btn svg{ width:13px; height:13px; }
+
+  footer{ border-top:1px solid var(--line); padding:32px 0; }
+  .foot-row{ display:flex; align-items:center; justify-content:space-between; font-size:13px; color:var(--muted); flex-wrap:wrap; gap:12px; }
+  .foot-row a{text-decoration:none;} .foot-row a:hover{color:var(--fg);}
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+<header>
+  <nav class="wrap" aria-label="Primary">
+    <a class="logo" href="aria-landing.html"><span class="logo-mark"></span>A11xyz</a>
+    <div class="nav-links">
+      <a href="how-it-works.html">How it works</a>
+      <a href="what-we-catch.html">What we catch</a>
+      <a href="learn.html" class="active">Learn</a>
+      <a href="faq.html">FAQ</a>
+    </div>
+    <a class="nav-cta" href="aria-landing.html">Run a free audit</a>
+  </nav>
+</header>
+
+<main class="wrap" id="main">
+  <div class="breadcrumb"><a href="learn.html">Learn</a> / Accessibility fundamentals</div>
+  <div class="reader-head">
+    <div>
+      <h1>Accessibility fundamentals</h1>
+      <p>What it means, who it affects, and why it's a legal and business issue as much as a design one.</p>
+    </div>
+    <img class="reader-illo" src="illustrations/fundamentals.png" alt="" width="560" height="560">
+  </div>
+
+  <div class="reader-layout">
+    <div class="chapter-sidebar" role="tablist" aria-label="Chapters" aria-orientation="vertical">
+      <button class="chapter-tab" role="tab" id="ch-overview" aria-selected="true" aria-controls="panel-overview" tabindex="0"><span class="num mono">01</span> Overview</button>
+      <button class="chapter-tab" role="tab" id="ch-screen-readers" aria-selected="false" aria-controls="panel-screen-readers" tabindex="-1"><span class="num mono">02</span> Screen readers</button>
+      <button class="chapter-tab" role="tab" id="ch-why" aria-selected="false" aria-controls="panel-why" tabindex="-1"><span class="num mono">03</span> Why it matters</button>
+      <button class="chapter-tab" role="tab" id="ch-laws" aria-selected="false" aria-controls="panel-laws" tabindex="-1"><span class="num mono">04</span> Laws &amp; standards</button>
+    </div>
+
+    <div>
+      <div class="chapter-panel prose" id="panel-overview" role="tabpanel" aria-labelledby="ch-overview" tabindex="0" data-active>
+        <h2>Overview</h2>
+        <p>Accessibility means digital products, websites, apps, tools, are usable by as many people as possible, including people with disabilities. Disabilities come in many forms: they can affect vision, hearing, motor skills, or how someone processes information. In simple terms, accessibility means designing beyond the "average" user, for the full spectrum of human diversity.</p>
+
+        <h3>Types of disabilities</h3>
+        <div class="type-grid">
+          <div class="type-card"><img class="type-illo" src="illustrations/access-visual.png" alt="" width="128" height="128"><h4>Visual</h4><p>Blindness, low vision, colour blindness. May rely on screen readers, magnifiers, or high-contrast settings.</p></div>
+          <div class="type-card"><img class="type-illo" src="illustrations/access-hearing.png" alt="" width="128" height="128"><h4>Auditory</h4><p>Hearing impairments needing captions, transcripts, or visual cues for audio and video.</p></div>
+          <div class="type-card"><img class="type-illo" src="illustrations/access-speech.png" alt="" width="128" height="128"><h4>Speech</h4><p>Difficulty using voice-controlled features. Alternative input methods matter here.</p></div>
+          <div class="type-card"><img class="type-illo" src="illustrations/access-cognitive.png" alt="" width="128" height="128"><h4>Cognitive</h4><p>Dyslexia to memory impairments. Needs clear navigation and simple, predictable language.</p></div>
+          <div class="type-card"><img class="type-illo" src="illustrations/access-motor.png" alt="" width="128" height="128"><h4>Motor</h4><p>Limited mobility, often relying on keyboard navigation, voice commands, or switches.</p></div>
+          <div class="type-card"><h4>Age-related</h4><p>Affects vision, hearing, mobility and cognition. 442 million people worldwide, a growing group.</p></div>
+        </div>
+
+        <p>Disabilities also aren't always permanent. A <b>temporary</b> disability, like a broken arm, a <b>situational</b> one, like trying to read a screen in bright sunlight, and a <b>permanent</b> one all deserve the same design consideration, because at some point almost everyone experiences at least one of the three.</p>
+
+        <h3>Common challenges in mobile apps</h3>
+        <ul>
+          <li><b>Small touch targets</b>: buttons too tiny to tap reliably for anyone with limited dexterity.</li>
+          <li><b>Poor colour contrast</b>: text or icons that blend into the background.</li>
+          <li><b>Inconsistent navigation</b>: layouts that are hard to predict, especially for cognitive impairments.</li>
+          <li><b>No screen reader support</b>: custom components with no label leave screen reader users stranded.</li>
+        </ul>
+
+        <div class="chapter-nav-footer">
+          <span></span>
+          <button class="goto-btn next" data-target="ch-screen-readers"><span class="label">Next</span><span class="title">Screen readers <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+        </div>
+      </div>
+
+      <div class="chapter-panel prose" id="panel-screen-readers" role="tabpanel" aria-labelledby="ch-screen-readers" tabindex="0">
+        <h2>What screen readers are</h2>
+        <p>A screen reader is software that takes what's on a screen and speaks it, or sends it to a braille display. People who are blind or have low vision use them to browse, fill in forms, and complete the same tasks sighted people do by looking. They don't read the pixels. They read a structured version of the page, built from headings, labels, buttons, links, and other named controls.</p>
+        <p>People who aren't blind use them too: some people with dyslexia or cognitive disabilities, anyone whose screen has failed, anyone whose hands are full. If a product doesn't work with a screen reader, it doesn't work for a large part of the audience accessibility is meant to include.</p>
+
+        <h3>What it actually announces</h3>
+        <p>For each control, a screen reader typically says three things. If any of them is missing or wrong, the control is hard or impossible to use.</p>
+        <div class="type-grid">
+          <div class="type-card"><h4>Name</h4><p>"Submit", "Email address", "Home". If a control has no name, the reader has nothing useful to say.</p></div>
+          <div class="type-card"><h4>Role</h4><p>Button, link, heading, checkbox. So someone knows what they can do with it, not just what it looks like.</p></div>
+          <div class="type-card"><h4>State</h4><p>Checked, expanded, disabled, 2 of 4. So they know where they are and what just changed.</p></div>
+        </div>
+
+        <h3>How people actually move through a page</h3>
+        <p>Experienced users don't listen to every word in order. They jump by headings, landmarks, links, and form fields, the way a sighted person scans. If those structures are missing, fake, or out of order, the page becomes a long, undifferentiated stream of text.</p>
+        <ul>
+          <li><b>Headings are a table of contents</b>: a skippable outline of the page, not just large text.</li>
+          <li><b>Buttons need to be real buttons, with a name</b>: a clickable <span class="mono">div</span> with no label is silent, or announces as "clickable" and nothing else.</li>
+          <li><b>Meaningful images need alt text</b>: decorative ones should be silent, so they don't interrupt the flow.</li>
+          <li><b>Focus order should match the visual order</b>: keyboard and screen reader users follow the same path through the page.</li>
+        </ul>
+
+        <h3>The common ones</h3>
+        <ul>
+          <li><b>VoiceOver</b>: built into macOS and iOS.</li>
+          <li><b>TalkBack</b>: built into Android.</li>
+          <li><b>NVDA</b>: free, widely used on Windows, especially for testing web.</li>
+          <li><b>JAWS</b>: paid, still common in enterprise and government.</li>
+          <li><b>Narrator</b>: built into Windows.</li>
+        </ul>
+        <p>How to turn them on and what to check is in <a href="learn-testing.html">Accessibility testing</a>. This chapter is the mental model: if name, role, and state aren't there, a screen reader has nothing to work with.</p>
+
+        <div class="chapter-nav-footer">
+          <button class="goto-btn" data-target="ch-overview"><span class="label">Back</span><span class="title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg> Overview</span></button>
+          <button class="goto-btn next" data-target="ch-why"><span class="label">Next</span><span class="title">Why it matters <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+        </div>
+      </div>
+
+      <div class="chapter-panel prose" id="panel-why" role="tabpanel" aria-labelledby="ch-why" tabindex="0">
+        <h2>Why it matters</h2>
+        <p>Once you design with accessibility in mind, you're automatically building products that work better for everyone. It isn't just about meeting legal standards or growing your audience, it's a prerequisite for calling yourself a human-centred designer at all.</p>
+
+        <div class="stat-strip">
+          <div class="stat-chip"><span class="n mono">~15%</span><span class="l">of the global population lives with a disability</span></div>
+          <div class="stat-chip"><span class="n mono">1B+</span><span class="l">potential users excluded by inaccessible design</span></div>
+        </div>
+
+        <ul>
+          <li><b>Legal compliance</b>: many countries mandate accessibility in digital products. Non-compliance risks lawsuits, fines, and reputational damage.</li>
+          <li><b>Market opportunity</b>: designing for accessibility opens a market of over a billion people otherwise excluded.</li>
+          <li><b>Everyone benefits</b>: accessibility features built for specific needs often become invaluable to everyone. VoiceOver, for instance, exists because someone needed it, and now helps anyone whose screen breaks, or whose hands are full.</li>
+          <li><b>Ethical responsibility</b>: accessible design upholds equity, ensuring no one is excluded from the digital world.</li>
+          <li><b>Innovation &amp; brand value</b>: constraints inspire creative solutions. Companies known for accessibility, like Apple and Microsoft, earn stronger brand reputations.</li>
+        </ul>
+
+        <div class="chapter-nav-footer">
+          <button class="goto-btn" data-target="ch-screen-readers"><span class="label">Back</span><span class="title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg> Screen readers</span></button>
+          <button class="goto-btn next" data-target="ch-laws"><span class="label">Next</span><span class="title">Laws &amp; standards <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+        </div>
+      </div>
+
+      <div class="chapter-panel prose" id="panel-laws" role="tabpanel" aria-labelledby="ch-laws" tabindex="0">
+        <h2>Laws &amp; standards</h2>
+        <p>Accessibility isn't only a design consideration, in many parts of the world it's a legal requirement.</p>
+
+        <ul>
+          <li><b>ADA (Americans with Disabilities Act)</b>: in the US, mandates that public spaces, including digital products, are accessible.</li>
+          <li><b>Section 508</b>: applies specifically to US federal agencies and their electronic and information technology.</li>
+          <li><b>EN 301 549</b>: the European standard for accessibility in public procurement of ICT products and services.</li>
+          <li><b>UK Equality Act 2010</b>: enforces accessibility standards in the UK.</li>
+          <li><b>Apple's Human Interface Guidelines</b>: platform standard emphasising VoiceOver, Dynamic Type, and custom accessibility actions.</li>
+          <li><b>Google's Material Design Accessibility</b>: platform standard focused on contrast, touch target size, and TalkBack support.</li>
+        </ul>
+
+        <div class="case-card">
+          <h4>The cost of getting it wrong</h4>
+          <p>In 2006, the National Federation of the Blind sued Target Corporation over its website's inaccessibility to screen reader users, alleging missing alt text across the site. The case settled in 2008 for $6 million, alongside a commitment to fix the underlying issues. It remains one of the clearest examples of what ignoring accessibility can cost.</p>
+        </div>
+
+        <div class="chapter-nav-footer">
+          <button class="goto-btn" data-target="ch-why"><span class="label">Back</span><span class="title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg> Why it matters</span></button>
+          <a class="goto-btn next" href="learn-designing.html"><span class="label">Continue</span><span class="title">Designing for accessibility <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap foot-row">
+    <span>&copy; 2026 Aria</span>
+    <a class="mono" href="request-audit.html">Automated scan, not a legal compliance certification</a>
+    <a href="mailto:maevepepple@gmail.com">maevepepple@gmail.com</a>
+  </div>
+</footer>
+
+<script>
+  function initTabs(tablist){
+    var tabs = Array.prototype.slice.call(tablist.querySelectorAll('[role="tab"]'));
+    function activate(tab, moveFocus){
+      tabs.forEach(function(t){
+        var selected = t === tab;
+        t.setAttribute('aria-selected', selected ? 'true' : 'false');
+        t.tabIndex = selected ? 0 : -1;
+        var panel = document.getElementById(t.getAttribute('aria-controls'));
+        if(panel){
+          if(selected){ panel.setAttribute('data-active',''); panel.style.display = 'block'; }
+          else { panel.removeAttribute('data-active'); panel.style.display = 'none'; }
+        }
+      });
+      if(moveFocus) tab.focus();
+    }
+    tabs.forEach(function(tab){
+      tab.addEventListener('click', function(){ activate(tab, false); });
+      tab.addEventListener('keydown', function(e){
+        var idx = tabs.indexOf(document.activeElement);
+        if(e.key === 'ArrowDown' || e.key === 'ArrowRight'){ e.preventDefault(); activate(tabs[(idx+1)%tabs.length], true); }
+        else if(e.key === 'ArrowUp' || e.key === 'ArrowLeft'){ e.preventDefault(); activate(tabs[(idx-1+tabs.length)%tabs.length], true); }
+        else if(e.key === 'Home'){ e.preventDefault(); activate(tabs[0], true); }
+        else if(e.key === 'End'){ e.preventDefault(); activate(tabs[tabs.length-1], true); }
+      });
+    });
+    tablist._activate = activate;
+  }
+  document.querySelectorAll('[role="tablist"]').forEach(initTabs);
+
+  document.querySelectorAll('.goto-btn[data-target]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var target = document.getElementById(btn.dataset.target);
+      var tablist = target.closest('[role="tablist"]');
+      tablist._activate(target, true);
+      document.querySelector('.reader-layout').scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+</script>
+
+</body>
+</html>

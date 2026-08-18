@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scan results · Aria</title>
+<link rel="preconnect" href="https://fonts.cdnfonts.com">
+<link href="https://fonts.cdnfonts.com/css/geist-sans" rel="stylesheet">
+<link href="https://fonts.cdnfonts.com/css/geist-mono" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAFAF8; --bg-raised:#FFFFFF; --fg:#17160F; --muted:#5E5B52;
+    --line:#E7E3D9; --line-strong:#D8D3C6; --dot:#DEDACD;
+    --accent-a:#2150C2; --accent-b:#12B3A8;
+    --crit:#C8432A; --serious:#C87A2A; --moderate:#8A7010; --minor:#8A8676;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%; overflow-x:hidden;}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:'Geist Sans','Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-weight:400; -webkit-font-smoothing:antialiased; line-height:1.5;
+    background-image:radial-gradient(var(--dot) 1px, transparent 1px);
+    background-size:22px 22px;
+    display:flex; flex-direction:column;
+  }
+  .mono{ font-family:'Geist Mono','SFMono-Regular',Consolas,monospace; font-weight:400; }
+  a{color:inherit;}
+  ::selection{background:var(--accent-a); color:#fff;}
+  :focus-visible{ outline:2px solid transparent; box-shadow:0 0 0 2px var(--bg), 0 0 0 4px var(--accent-a); border-radius:6px; }
+  .skip-link{ position:absolute; left:16px; top:10px; z-index:200; background:var(--fg); color:var(--bg); padding:8px 14px; border-radius:8px; text-decoration:none; font-size:14px; clip-path:inset(50%); width:1px; height:1px; overflow:hidden; white-space:nowrap; }
+  .skip-link:focus{ clip-path:none; width:auto; height:auto; overflow:visible; }
+
+  .wrap{max-width:1080px; margin:0 auto; padding:0 28px;}
+
+  header{ position:sticky; top:0; z-index:50; background:rgba(250,250,248,0.86); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+  header nav.wrap{
+    max-width:none; width:100%;
+    display:grid; grid-template-columns:1fr auto 1fr;
+    align-items:center; height:68px;
+  }
+  .logo{ display:flex; align-items:center; gap:9px; font-size:17px; letter-spacing:-0.01em; text-decoration:none; justify-self:start; }
+  .logo-mark{ width:18px; height:18px; border-radius:50%; background:conic-gradient(from 200deg, var(--accent-a), var(--accent-b)); flex:0 0 auto; }
+  .nav-links{ display:flex; align-items:center; gap:30px; font-size:14.5px; color:var(--muted); justify-self:center; }
+  .nav-links a{ text-decoration:none; }
+  .nav-links a:hover{color:var(--fg);}
+  .nav-cta{ display:inline-flex; background:var(--fg); color:var(--bg); padding:9px 16px; border-radius:999px; font-size:14px; text-decoration:none; justify-self:end; white-space:nowrap; }
+  .nav-cta-menu{ display:none; }
+  .nav-toggle{
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+    width:40px; height:40px; margin-right:-8px; justify-self:end;
+    border:none; background:transparent; padding:0; cursor:pointer;
+  }
+  .nav-toggle span{ display:block; width:18px; height:1.5px; background:var(--fg); border-radius:1px; transition:transform 0.2s ease, opacity 0.2s ease; }
+  .nav-toggle[aria-expanded="true"] span:nth-child(1){ transform:translateY(6.5px) rotate(45deg); }
+  .nav-toggle[aria-expanded="true"] span:nth-child(2){ opacity:0; }
+  .nav-toggle[aria-expanded="true"] span:nth-child(3){ transform:translateY(-6.5px) rotate(-45deg); }
+
+  .results-body{
+    flex:1; min-width:0; min-height:0;
+    display:grid;
+    grid-template-columns:minmax(0,1.2fr) minmax(0,0.8fr);
+    grid-template-rows:1fr auto;
+    grid-template-areas:
+      "shot panel"
+      "shot nav";
+  }
+  .shot-col{ grid-area:shot; min-width:0; }
+  .issue-panel{ grid-area:panel; min-width:0; }
+  .issue-nav{ grid-area:nav; min-width:0; }
+  .issue-nav[hidden]{ display:none !important; }
+  @media (max-width:900px){
+    html,body{ height:auto; min-height:100%; }
+    .results-body{
+      grid-template-columns:1fr;
+      grid-template-rows:auto;
+      grid-template-areas:
+        "shot"
+        "nav"
+        "panel";
+      flex:none;
+    }
+    .shot-col{ border-right:none; border-bottom:1px solid var(--line); }
+    .shot-viewport{ min-height:240px; max-height:48vh; }
+    .issue-panel{ min-height:auto; }
+    .issue-body{ overflow:visible; }
+    .issue-nav{
+      border-top:none;
+      border-bottom:1px solid var(--line);
+      background:var(--bg-raised);
+    }
+  }
+  @media (max-width:860px){
+    .wrap{ padding:0 18px; }
+    header nav.wrap{ display:flex; justify-content:space-between; height:64px; padding:0 18px; }
+    .nav-toggle{ display:inline-flex; }
+    header nav.wrap > .nav-cta{ display:none; }
+    .nav-links{
+      display:none; position:absolute; top:100%; left:0; right:0;
+      flex-direction:column; align-items:stretch; gap:0;
+      padding:8px 18px 18px;
+      background:rgba(250,250,248,0.96); backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--line);
+    }
+    header.nav-open .nav-links{ display:flex; }
+    .nav-links a{ padding:12px 0; border-bottom:1px solid var(--line); }
+    .nav-links a.nav-cta-menu{ display:inline-flex; margin-top:14px; border-bottom:none; align-self:flex-start; padding:9px 16px; }
+    .issue-head, .issue-body, .issue-nav{ padding-left:18px; padding-right:18px; }
+    .issue-title{ font-size:19px; }
+  }
+
+  .shot-col{
+    border-right:1px solid var(--line);
+    display:flex; flex-direction:column; min-height:0;
+  }
+  .shot-topbar{
+    display:flex; align-items:center; gap:7px;
+    padding:14px 18px; border-bottom:1px solid var(--line);
+    background:var(--bg-raised);
+  }
+  .shot-topbar i{ width:8px; height:8px; border-radius:50%; background:var(--line-strong); font-style:normal; }
+  .shot-url{ margin-left:8px; font-size:12.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  .shot-viewport{
+    flex:1; min-height:420px; position:relative;
+    overflow:auto; background:#EFECE4;
+  }
+  .shot-stage{ position:relative; width:100%; }
+  .shot-image{ width:100%; display:block; }
+  .mock-page{
+    min-height:520px; padding:28px;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .mock-page[hidden],
+  .shot-image[hidden]{ display:none !important; }
+  .mock-page .wire{
+    background:var(--bg-raised); border:1px solid var(--line); border-radius:10px;
+    height:48px;
+  }
+  .mock-page .wire.lg{ height:120px; }
+  .mock-page .wire.sm{ height:28px; width:60%; }
+
+  .highlight{
+    position:absolute; pointer-events:none; display:none;
+    border:2px solid var(--moderate); border-radius:4px;
+    background:transparent;
+    z-index:2;
+    scroll-margin: 64px;
+  }
+  .highlight.crit{ border-color:var(--crit); }
+  .highlight.serious{ border-color:var(--serious); }
+  .highlight.moderate{ border-color:var(--moderate); }
+  .highlight.minor{ border-color:var(--minor); }
+
+  .shot-status{
+    position:absolute; inset:0; display:none;
+    align-items:center; justify-content:center;
+    background:rgba(250,250,248,0.78);
+    z-index:3; text-align:center; padding:24px;
+  }
+  .shot-viewport.is-loading .shot-status,
+  .shot-viewport.is-error .shot-status{ display:flex; flex-direction:column; gap:10px; }
+  .pulse{
+    width:8px; height:8px; border-radius:50%; margin:0 auto;
+    background:linear-gradient(90deg,var(--accent-a),var(--accent-b));
+    animation:pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+  .shot-status p{ margin:0; color:var(--muted); font-size:14.5px; }
+
+  .issue-panel{
+    display:flex; flex-direction:column; min-height:0;
+    background:var(--bg-raised);
+  }
+  .issue-panel.is-loading .issue-body,
+  .issue-panel.is-error .issue-body{ display:none; }
+  .issue-panel.is-loading .panel-status,
+  .issue-panel.is-error .panel-status{ display:flex; }
+  .panel-status{
+    display:none; flex:1; align-items:center; justify-content:center;
+    flex-direction:column; gap:10px; padding:40px 28px; text-align:center;
+    color:var(--muted); font-size:14.5px;
+  }
+  .panel-status h2{ font-size:22px; font-weight:400; letter-spacing:-0.02em; margin:0 0 8px; color:var(--fg); }
+  .panel-status .error-text{ color:var(--crit); }
+
+  .issue-head{
+    padding:22px 28px 16px; border-bottom:1px solid var(--line);
+  }
+  .issue-kicker{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    font-size:12.5px; color:var(--muted); margin-bottom:10px;
+  }
+  .sev{
+    display:inline-flex; align-items:center; gap:6px;
+    text-transform:capitalize;
+    color:var(--fg);
+  }
+  .sev::before{
+    content:''; width:7px; height:7px; border-radius:50%; background:var(--muted);
+  }
+  .sev.crit::before{ background:var(--crit); }
+  .sev.serious::before{ background:var(--serious); }
+  .sev.moderate::before{ background:var(--moderate); }
+  .sev.minor::before{ background:var(--minor); }
+  .issue-title{ font-size:22px; font-weight:400; letter-spacing:-0.02em; margin:0 0 8px; }
+  .issue-meta{ font-size:13px; color:var(--muted); display:flex; flex-wrap:wrap; gap:8px; }
+  .wcag-pill{
+    border:1px solid var(--line); border-radius:6px; padding:2px 7px; font-size:11.5px;
+  }
+
+  .issue-body{ padding:22px 28px 28px; overflow:auto; flex:1; }
+  .issue-body h3{ font-size:13px; font-weight:400; color:var(--muted); margin:0 0 8px; }
+  .issue-body p{ font-size:14.5px; margin:0 0 22px; }
+  .selector{ font-size:12.5px; color:var(--muted); overflow-wrap:anywhere; word-break:break-word; margin:0 0 22px; }
+  .fix-code{
+    background:#0F0E0A; color:#E4E1D6; border-radius:12px;
+    padding:14px 16px; font-size:12.5px; line-height:1.6;
+    overflow:auto; max-width:100%;
+    white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word;
+    margin:0;
+  }
+
+  .issue-nav{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; padding:16px 28px; border-top:1px solid var(--line);
+  }
+  .issue-nav button{
+    border:1px solid var(--line-strong); background:var(--bg); color:var(--fg);
+    padding:9px 14px; border-radius:9px; font:inherit; font-size:14px; cursor:pointer;
+  }
+  .issue-nav button:hover{ border-color:var(--fg); }
+  .issue-nav button:disabled{ opacity:0.4; cursor:default; }
+  .issue-count{ font-size:13px; color:var(--muted); }
+
+  footer{ border-top:1px solid var(--line); padding:18px 0; }
+  .foot-row{ display:flex; align-items:center; justify-content:space-between; font-size:13px; color:var(--muted); flex-wrap:wrap; gap:12px; }
+  .foot-row a{text-decoration:none;}
+  .foot-row a:hover{color:var(--fg);}
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+<header>
+  <nav class="wrap" aria-label="Primary">
+    <a class="logo" href="aria-landing.html"><span class="logo-mark"></span>A11xyz</a>
+    <div class="nav-links" id="nav-menu">
+      <a href="how-it-works.html">How it works</a>
+      <a href="what-we-catch.html">What we catch</a>
+      <a href="learn.html">Learn</a>
+      <a href="faq.html">FAQ</a>
+      <a class="nav-cta nav-cta-menu" href="aria-landing.html">Try again</a>
+    </div>
+    <a class="nav-cta" href="aria-landing.html">Try again</a>
+    <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Open menu">
+      <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+    </button>
+  </nav>
+</header>
+
+<main id="main" class="results-body">
+  <div class="shot-col">
+    <div class="shot-topbar">
+      <i></i><i></i><i></i>
+      <span class="shot-url mono" id="shot-url">Scanning…</span>
+    </div>
+    <div class="shot-viewport is-loading" id="shot-viewport">
+      <div class="shot-stage" id="shot-stage">
+        <div class="mock-page" id="mock-page" aria-hidden="true">
+          <div class="wire lg"></div>
+          <div class="wire"></div>
+          <div class="wire sm"></div>
+          <div class="wire"></div>
+          <div class="wire lg"></div>
+          <div class="wire sm"></div>
+        </div>
+        <img class="shot-image" id="shot-image" alt="Screenshot of the audited page" hidden>
+        <div class="highlight" id="highlight"></div>
+      </div>
+      <div class="shot-status" id="shot-status">
+        <span class="pulse"></span>
+        <p>Rendering the page and running the scan. This can take up to a minute.</p>
+      </div>
+    </div>
+  </div>
+
+  <nav class="issue-nav" id="issue-nav" hidden aria-label="Issues">
+    <button type="button" id="btn-prev">Previous</button>
+    <span class="issue-count mono" id="issue-count"></span>
+    <button type="button" id="btn-next">Next</button>
+  </nav>
+
+  <aside class="issue-panel is-loading" id="issue-panel" aria-label="Issue details">
+    <div class="panel-status" id="panel-status">
+      <span class="pulse"></span>
+      <h2>Reading the page</h2>
+      <p>Issues will appear here in the order a screen reader meets them.</p>
+    </div>
+    <div class="issue-body" id="issue-empty" hidden>
+      <div class="issue-head">
+        <div class="issue-kicker"><span>Report</span></div>
+        <h2 class="issue-title">No issues found</h2>
+        <p class="issue-meta">A11xyz did not flag any violations</p>
+      </div>
+    </div>
+    <div class="issue-head" id="issue-head" hidden>
+      <div class="issue-kicker">
+        <span class="sev" id="issue-sev">crit</span>
+        <span id="issue-category">Colour contrast</span>
+      </div>
+      <h2 class="issue-title" id="issue-title"></h2>
+      <div class="issue-meta">
+        <span class="wcag-pill mono" id="issue-wcag"></span>
+        <span id="issue-index"></span>
+      </div>
+    </div>
+    <div class="issue-body" id="issue-body" hidden>
+      <h3>What this means</h3>
+      <p id="issue-why"></p>
+      <h3>Selector</h3>
+      <p class="selector mono" id="issue-selector"></p>
+      <h3>Suggested fix</h3>
+      <p id="issue-fix"></p>
+      <pre class="fix-code mono" id="issue-code"></pre>
+    </div>
+  </aside>
+</main>
+
+<footer>
+  <div class="wrap foot-row">
+    <span>&copy; 2026 Aria</span>
+    <a class="mono" href="request-audit.html">Automated scan, not a legal compliance certification</a>
+    <a href="mailto:maevepepple@gmail.com">maevepepple@gmail.com</a>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var header = document.querySelector('header');
+    var toggle = document.querySelector('.nav-toggle');
+    if(!header || !toggle) return;
+    function setOpen(open){
+      header.classList.toggle('nav-open', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    }
+    toggle.addEventListener('click', function(){
+      setOpen(!header.classList.contains('nav-open'));
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape') setOpen(false);
+    });
+    header.querySelectorAll('#nav-menu a').forEach(function(link){
+      link.addEventListener('click', function(){ setOpen(false); });
+    });
+    window.addEventListener('resize', function(){
+      if(window.matchMedia('(min-width:861px)').matches) setOpen(false);
+    });
+  })();
+
+  var issues = [];
+  var current = 0;
+  var pageSize = { width: 0, height: 0 };
+
+  var params = new URLSearchParams(window.location.search);
+  var targetUrl = (params.get('url') || '').trim();
+
+  var shotViewport = document.getElementById('shot-viewport');
+  var shotStatus = document.getElementById('shot-status');
+  var shotImage = document.getElementById('shot-image');
+  var mockPage = document.getElementById('mock-page');
+  var highlight = document.getElementById('highlight');
+  var panel = document.getElementById('issue-panel');
+  var panelStatus = document.getElementById('panel-status');
+
+  function setLoading(on){
+    shotViewport.classList.toggle('is-loading', on);
+    panel.classList.toggle('is-loading', on);
+  }
+
+  function showError(message){
+    setLoading(false);
+    shotViewport.classList.add('is-error');
+    panel.classList.add('is-error');
+    shotViewport.classList.remove('is-loading');
+    panel.classList.remove('is-loading');
+    shotStatus.innerHTML = '<p>' + message + '</p>';
+    panelStatus.innerHTML = '<h2>Scan failed</h2><p class="error-text">' + message + '</p>';
+  }
+
+  function positionHighlight(issue){
+    if(!issue || !issue.boundingBox || !shotImage.naturalWidth){
+      highlight.style.display = 'none';
+      return;
+    }
+    var box = issue.boundingBox;
+    var srcW = pageSize.width || shotImage.naturalWidth;
+    var srcH = pageSize.height || shotImage.naturalHeight;
+    if(!srcW || !srcH){
+      highlight.style.display = 'none';
+      return;
+    }
+    highlight.className = 'highlight ' + (issue.severity || '');
+    highlight.style.display = 'block';
+    highlight.style.left = (box.x / srcW * 100) + '%';
+    highlight.style.top = (box.y / srcH * 100) + '%';
+    highlight.style.width = (box.width / srcW * 100) + '%';
+    highlight.style.height = (box.height / srcH * 100) + '%';
+    scrollHighlightIntoView();
+  }
+
+  function scrollHighlightIntoView(){
+    if(highlight.style.display === 'none') return;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    requestAnimationFrame(function(){
+      var top = highlight.offsetTop;
+      var height = highlight.offsetHeight || 0;
+      var left = highlight.offsetLeft;
+      var width = highlight.offsetWidth || 0;
+      shotViewport.scrollTo({
+        top: Math.max(0, top + height / 2 - shotViewport.clientHeight / 2),
+        left: Math.max(0, left + width / 2 - shotViewport.clientWidth / 2),
+        behavior: reduce ? 'auto' : 'smooth'
+      });
+    });
+  }
+
+  function renderIssue(){
+    var issue = issues[current];
+    if(!issue) return;
+    document.getElementById('issue-sev').className = 'sev ' + issue.severity;
+    document.getElementById('issue-sev').textContent = issue.severity === 'crit' ? 'Critical' : issue.severity;
+    document.getElementById('issue-category').textContent = issue.category || '';
+    document.getElementById('issue-title').textContent = issue.title || '';
+    document.getElementById('issue-wcag').textContent = issue.wcag ? 'WCAG ' + issue.wcag : '';
+    document.getElementById('issue-index').textContent = (current + 1) + ' of ' + issues.length;
+    document.getElementById('issue-why').textContent = issue.why || '';
+    document.getElementById('issue-selector').textContent = issue.selector || '';
+    document.getElementById('issue-fix').textContent = issue.fixText || '';
+    document.getElementById('issue-code').textContent = issue.fixCode || '';
+    document.getElementById('issue-count').textContent = (current + 1) + ' / ' + issues.length;
+    document.getElementById('btn-prev').disabled = issues.length < 2;
+    document.getElementById('btn-next').disabled = issues.length < 2;
+    positionHighlight(issue);
+  }
+
+  function showIssue(index){
+    if(!issues.length) return;
+    current = (index + issues.length) % issues.length;
+    renderIssue();
+  }
+
+  document.getElementById('btn-prev').addEventListener('click', function(){ showIssue(current - 1); });
+  document.getElementById('btn-next').addEventListener('click', function(){ showIssue(current + 1); });
+  document.addEventListener('keydown', function(e){
+    if(!issues.length) return;
+    if(document.querySelector('header.nav-open')) return;
+    if(e.key === 'ArrowLeft' || e.key === 'ArrowUp'){
+      e.preventDefault();
+      showIssue(current - 1);
+    }
+    if(e.key === 'ArrowRight' || e.key === 'ArrowDown'){
+      e.preventDefault();
+      showIssue(current + 1);
+    }
+  });
+
+  shotImage.addEventListener('load', function(){
+    if(issues[current]) positionHighlight(issues[current]);
+  });
+
+  async function run(){
+    if(!targetUrl){
+      showError('No URL was provided. Go back and paste a page to scan.');
+      return;
+    }
+    document.getElementById('shot-url').textContent = targetUrl;
+    document.title = 'Scanning · Aria';
+
+    var controller = new AbortController();
+    var timer = setTimeout(function(){ controller.abort(); }, 90000);
+
+    try{
+      var res = await fetch('/audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: targetUrl }),
+        signal: controller.signal
+      });
+      var data = await res.json().catch(function(){ return {}; });
+      if(!res.ok){
+        throw new Error(data.error || data.detail || 'Could not complete the scan.');
+      }
+
+      issues = Array.isArray(data.issues) ? data.issues : [];
+      pageSize = data.pageSize || { width: 0, height: 0 };
+
+      setLoading(false);
+      shotViewport.classList.remove('is-loading');
+      panel.classList.remove('is-loading');
+      mockPage.hidden = true;
+      mockPage.remove();
+      if(data.screenshot){
+        shotImage.hidden = false;
+        shotImage.src = data.screenshot;
+      }
+      document.title = 'Scan results · Aria';
+
+      if(!issues.length){
+        document.getElementById('issue-empty').hidden = false;
+        highlight.style.display = 'none';
+        return;
+      }
+
+      document.getElementById('issue-head').hidden = false;
+      document.getElementById('issue-body').hidden = false;
+      document.getElementById('issue-nav').hidden = false;
+      showIssue(0);
+    } catch (err){
+      var message = err && err.name === 'AbortError'
+        ? 'The scan timed out. The page may be unreachable or taking too long to load.'
+        : (err && err.message) || 'Could not complete the scan.';
+      showError(message);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  run();
+</script>
+</body>
+</html>

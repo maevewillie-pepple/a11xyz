@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAQ · Aria</title>
+<link rel="preconnect" href="https://fonts.cdnfonts.com">
+<link href="https://fonts.cdnfonts.com/css/geist-sans" rel="stylesheet">
+<link href="https://fonts.cdnfonts.com/css/geist-mono" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAFAF8; --bg-raised:#FFFFFF; --fg:#17160F; --muted:#5E5B52;
+    --line:#E7E3D9; --line-strong:#D8D3C6; --dot:#DEDACD;
+    --accent-a:#2150C2; --accent-b:#12B3A8;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth; overflow-x:hidden;}
+  body{
+    margin:0; background:var(--bg); color:var(--fg); overflow-x:hidden;
+    font-family:'Geist Sans','Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-weight:400; -webkit-font-smoothing:antialiased; line-height:1.5;
+    background-image:radial-gradient(var(--dot) 1px, transparent 1px);
+    background-size:22px 22px; background-position:0 0; animation:drift 60s linear infinite;
+  }
+  @keyframes drift{ to{ background-position:220px 220px; } }
+  .reveal{ opacity:0; transform:translateY(14px); transition:opacity 0.6s cubic-bezier(.16,.8,.3,1), transform 0.6s cubic-bezier(.16,.8,.3,1); }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+  .stagger .reveal:nth-child(1){transition-delay:0s;} .stagger .reveal:nth-child(2){transition-delay:0.05s;}
+  .stagger .reveal:nth-child(3){transition-delay:0.1s;} .stagger .reveal:nth-child(4){transition-delay:0.15s;}
+  .stagger .reveal:nth-child(5){transition-delay:0.2s;} .stagger .reveal:nth-child(6){transition-delay:0.25s;}
+  .stagger .reveal:nth-child(7){transition-delay:0.3s;} .stagger .reveal:nth-child(8){transition-delay:0.35s;}
+  .mono{ font-family:'Geist Mono','SFMono-Regular',Consolas,monospace; font-weight:400; }
+  a{color:inherit;}
+  ::selection{background:var(--accent-a); color:#fff;}
+  :focus-visible{ outline:2px solid transparent; box-shadow:0 0 0 2px var(--bg), 0 0 0 4px var(--accent-a); border-radius:6px; }
+  .skip-link{ position:absolute; left:16px; top:10px; z-index:200; background:var(--fg); color:var(--bg); padding:8px 14px; border-radius:8px; text-decoration:none; font-size:14px; clip-path:inset(50%); width:1px; height:1px; overflow:hidden; white-space:nowrap; }
+  .skip-link:focus{ clip-path:none; width:auto; height:auto; overflow:visible; }
+
+  .wrap{max-width:760px; margin:0 auto; padding:0 28px;}
+
+  header{ position:sticky; top:0; z-index:50; background:rgba(250,250,248,0.86); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); box-shadow:0 8px 20px -18px rgba(23,22,15,0); transition:box-shadow 0.3s ease; }
+  header.scrolled{ box-shadow:0 8px 20px -14px rgba(23,22,15,0.15); }
+  nav.wrap{ max-width:1080px; display:flex; align-items:center; justify-content:space-between; height:68px; }
+  .logo{ display:flex; align-items:center; gap:9px; font-size:17px; letter-spacing:-0.01em; text-decoration:none; }
+  .logo-mark{ width:18px; height:18px; border-radius:50%; background:conic-gradient(from 200deg, var(--accent-a), var(--accent-b)); flex:0 0 auto; transition:transform 0.5s cubic-bezier(.16,.8,.3,1); }
+  .logo:hover .logo-mark{ transform:rotate(160deg); }
+  .nav-links{ display:flex; align-items:center; gap:30px; font-size:14.5px; color:var(--muted); }
+  .nav-links a{ text-decoration:none; position:relative; transition:color 0.2s ease; }
+  .nav-links a::after{ content:''; position:absolute; left:0; right:100%; bottom:-4px; height:1px; background:var(--fg); transition:right 0.25s cubic-bezier(.16,.8,.3,1); }
+  .nav-links a:hover{color:var(--fg);}
+  .nav-links a:hover::after{right:0;}
+  .nav-links a.active{color:var(--fg);}
+  .nav-links a.active::after{right:0; background:linear-gradient(90deg,var(--accent-a),var(--accent-b));}
+  .nav-cta{ display:inline-flex; align-items:center; gap:6px; background:var(--fg); color:var(--bg); padding:9px 16px; border-radius:999px; font-size:14px; text-decoration:none; white-space:nowrap; transition:opacity 0.2s ease, transform 0.2s ease; }
+  .nav-cta:hover{opacity:0.85; transform:translateY(-1px);}
+  .nav-cta-menu{display:none;}
+  .nav-toggle{
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+    width:40px; height:40px; margin-right:-8px;
+    border:none; background:transparent; padding:0; cursor:pointer;
+  }
+  .nav-toggle span{ display:block; width:18px; height:1.5px; background:var(--fg); border-radius:1px; transition:transform 0.2s ease, opacity 0.2s ease; }
+  .nav-toggle[aria-expanded="true"] span:nth-child(1){ transform:translateY(6.5px) rotate(45deg); }
+  .nav-toggle[aria-expanded="true"] span:nth-child(2){ opacity:0; }
+  .nav-toggle[aria-expanded="true"] span:nth-child(3){ transform:translateY(-6.5px) rotate(-45deg); }
+  @media (max-width:860px){
+    .wrap{padding:0 18px;}
+    .nav-toggle{display:inline-flex;}
+    header nav.wrap > .nav-cta{display:none;}
+    .nav-links{
+      display:none; position:absolute; top:100%; left:0; right:0;
+      flex-direction:column; align-items:stretch; gap:0;
+      padding:8px 18px 18px;
+      background:rgba(250,250,248,0.96); backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--line);
+    }
+    header.nav-open .nav-links{display:flex;}
+    .nav-links a{padding:12px 0; border-bottom:1px solid var(--line);}
+    .nav-links a::after{display:none;}
+    .nav-links a.nav-cta-menu{display:inline-flex; margin-top:14px; border-bottom:none; align-self:flex-start; padding:9px 16px;}
+    .page-hero{padding:48px 0 36px;}
+  }
+
+  .page-hero{ padding:72px 0 48px; text-align:center; }
+  .eyebrow{ display:inline-flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); border:1px solid var(--line-strong); background:var(--bg-raised); padding:6px 14px; border-radius:999px; margin-bottom:22px; }
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:linear-gradient(90deg,var(--accent-a),var(--accent-b)); animation:pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+  h1{ font-size:clamp(30px, 5vw, 46px); font-weight:400; letter-spacing:-0.025em; margin:0 0 14px; }
+  .sub{ font-size:16px; color:var(--muted); }
+
+  section{padding:0 0 88px;}
+
+  .faq-list{ border-top:1px solid var(--line); }
+  details{ border-bottom:1px solid var(--line); }
+  summary{
+    list-style:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:22px 4px; font-size:16px;
+    transition:color 0.2s ease;
+  }
+  summary::-webkit-details-marker{ display:none; }
+  summary:hover{ color:var(--accent-a); }
+  .q-plus{
+    flex:0 0 auto; width:22px; height:22px; position:relative;
+  }
+  .q-plus::before, .q-plus::after{
+    content:''; position:absolute; background:var(--fg); border-radius:2px;
+    transition:transform 0.3s cubic-bezier(.16,.8,.3,1), background 0.2s ease;
+  }
+  .q-plus::before{ left:0; top:50%; width:100%; height:1.5px; transform:translateY(-50%); }
+  .q-plus::after{ top:0; left:50%; width:1.5px; height:100%; transform:translateX(-50%); }
+  details[open] .q-plus::after{ transform:translateX(-50%) rotate(90deg); opacity:0; }
+  summary:hover .q-plus::before, summary:hover .q-plus::after{ background:var(--accent-a); }
+
+  .a-panel{
+    padding:0 4px 24px; max-width:640px;
+    font-size:14.5px; color:var(--muted); line-height:1.65;
+  }
+  .a-panel p{margin:0;}
+  .a-panel a{ color:var(--accent-a); text-decoration:underline; text-underline-offset:3px; }
+
+  @keyframes fade-in{ from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);} }
+  details[open] .a-panel{ animation:fade-in 0.3s cubic-bezier(.16,.8,.3,1); }
+
+  .cta-band{ text-align:center; border-top:1px solid var(--line); padding:80px 0 0; }
+  .cta-band h2{ font-size:clamp(24px,4vw,32px); font-weight:400; letter-spacing:-0.02em; margin:0 0 28px; }
+  .btn{ display:inline-flex; align-items:center; gap:8px; background:var(--fg); color:var(--bg); text-decoration:none; padding:13px 24px; border-radius:9px; font-size:14.5px; transition:opacity 0.2s ease, transform 0.15s ease; }
+  .btn:hover{opacity:0.85;} .btn:active{transform:scale(0.97);}
+  .btn svg{width:14px; height:14px; transition:transform 0.25s ease;}
+  .btn:hover svg{transform:translateX(3px);}
+
+  footer{ border-top:1px solid var(--line); padding:32px 0; }
+  .foot-row{ max-width:1080px; margin:0 auto; padding:0 28px; display:flex; align-items:center; justify-content:space-between; font-size:13px; color:var(--muted); flex-wrap:wrap; gap:12px; }
+  .foot-row a{text-decoration:none;} .foot-row a:hover{color:var(--fg);}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+    .reveal{opacity:1 !important; transform:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+<header>
+  <nav class="wrap" aria-label="Primary">
+    <a class="logo" href="aria-landing.html"><span class="logo-mark"></span>A11xyz</a>
+    <div class="nav-links" id="nav-menu">
+      <a href="how-it-works.html">How it works</a>
+      <a href="what-we-catch.html">What we catch</a>
+      <a href="learn.html">Learn</a>
+      <a href="faq.html" class="active">FAQ</a>
+      <a class="nav-cta nav-cta-menu" href="aria-landing.html">Run a free audit</a>
+    </div>
+    <a class="nav-cta" href="aria-landing.html">Run a free audit</a>
+    <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Open menu">
+      <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+    </button>
+  </nav>
+</header>
+
+<main id="main">
+  <div class="page-hero wrap">
+    <span class="eyebrow reveal in"><span class="dot"></span> Questions</span>
+    <h1 class="reveal in">Common questions.</h1>
+    <p class="sub reveal in">If yours isn't here, email us and we'll answer it directly.</p>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <div class="faq-list stagger">
+
+        <details class="reveal" open>
+          <summary>How does an audit work?<span class="q-plus"></span></summary>
+          <div class="a-panel"><p>Paste in a public URL. We render the page in a real browser, scan it against WCAG 2.2, and order the results the way a screen reader would meet the page. Most scans finish in under a minute.</p></div>
+        </details>
+
+        <details class="reveal">
+          <summary>Is this a substitute for a full manual audit?<span class="q-plus"></span></summary>
+          <div class="a-panel"><p>No. Automated tools catch a meaningful slice of WCAG issues, but not all of them; things like whether alt text is actually meaningful, or whether a workflow makes sense to someone using a screen reader, still need a human. Treat this as a fast first pass, not a legal compliance sign-off. If you need a full audit or advice on what to fix, <a href="request-audit.html">get in touch</a>.</p></div>
+        </details>
+
+        <details class="reveal">
+          <summary>What WCAG level do you check?<span class="q-plus"></span></summary>
+          <div class="a-panel"><p>We check against WCAG 2.2 at the A and AA levels, which is what most accessibility laws and policies reference. AAA criteria aren't included in the automated scan.</p></div>
+        </details>
+
+        <details class="reveal">
+          <summary>Can you audit pages behind a login?<span class="q-plus"></span></summary>
+          <div class="a-panel"><p>Not in the current version. The scanner needs a public URL it can reach directly. Support for authenticated pages is on the roadmap.</p></div>
+        </details>
+
+        <details class="reveal">
+          <summary>Do you store the pages you scan?<span class="q-plus"></span></summary>
+          <div class="a-panel"><p>We keep the scan results so you can revisit your report, but we don't store a copy of your site itself beyond what's needed to generate that report.</p></div>
+        </details>
+
+        <details class="reveal">
+          <summary>How accurate is it?<span class="q-plus"></span></summary>
+          <div class="a-panel"><p>We build on axe-core, the same open-source engine used by Chrome DevTools and most accessibility tooling, so false positives are rare. It's still an automated check though, so we'd rather under-claim than over-promise. Need a human review? <a href="request-audit.html">Request an audit</a>.</p></div>
+        </details>
+
+        <details class="reveal">
+          <summary>Does it work on single-page apps?<span class="q-plus"></span></summary>
+          <div class="a-panel"><p>Yes. The page is rendered in a real browser and we wait for it to finish loading before scanning, so content built with JavaScript is included.</p></div>
+        </details>
+
+        <details class="reveal">
+          <summary>Can I audit a whole site, not just one page?<span class="q-plus"></span></summary>
+          <div class="a-panel"><p>Not yet. The current version scans one URL at a time. Multi-page and full-site audits are on the roadmap.</p></div>
+        </details>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-band reveal">
+    <div class="wrap">
+      <h2>Still have a question?</h2>
+      <a class="btn" href="mailto:maevepepple@gmail.com">
+        Email us
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="foot-row">
+    <span>&copy; 2026 Aria</span>
+    <a class="mono" href="request-audit.html">Automated scan, not a legal compliance certification</a>
+    <a href="mailto:maevepepple@gmail.com">maevepepple@gmail.com</a>
+  </div>
+</footer>
+
+<script>
+  var revealEls = document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){ entry.target.classList.add('in'); io.unobserve(entry.target); }
+      });
+    }, {threshold:0.1, rootMargin:'0px 0px -40px 0px'});
+    revealEls.forEach(function(el){ if(!el.classList.contains('in')) io.observe(el); });
+  } else {
+    revealEls.forEach(function(el){ el.classList.add('in'); });
+  }
+  var header = document.querySelector('header');
+  var onScroll = function(){ header.classList.toggle('scrolled', window.scrollY > 8); };
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+  (function(){
+    var toggle = document.querySelector('.nav-toggle');
+    if(!header || !toggle) return;
+    function setOpen(open){
+      header.classList.toggle('nav-open', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    }
+    toggle.addEventListener('click', function(){
+      setOpen(!header.classList.contains('nav-open'));
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape') setOpen(false);
+    });
+    header.querySelectorAll('#nav-menu a').forEach(function(link){
+      link.addEventListener('click', function(){ setOpen(false); });
+    });
+    window.addEventListener('resize', function(){
+      if(window.matchMedia('(min-width:861px)').matches) setOpen(false);
+    });
+  })();
+</script>
+
+</body>
+</html>

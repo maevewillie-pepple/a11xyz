@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Making components accessible · Aria</title>
+<link rel="preconnect" href="https://fonts.cdnfonts.com">
+<link href="https://fonts.cdnfonts.com/css/geist-sans" rel="stylesheet">
+<link href="https://fonts.cdnfonts.com/css/geist-mono" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAFAF8; --bg-raised:#FFFFFF; --fg:#17160F; --muted:#5E5B52;
+    --line:#E7E3D9; --line-strong:#D8D3C6; --dot:#DEDACD;
+    --accent-a:#2150C2; --accent-b:#12B3A8;
+    --good:#1E8F5F; --good-bg:#E7F4ED;
+    --warn:#C8432A; --warn-bg:#FBEAE5;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:'Geist Sans','Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-weight:400; -webkit-font-smoothing:antialiased; line-height:1.5;
+    background-image:radial-gradient(var(--dot) 1px, transparent 1px);
+    background-size:22px 22px; background-position:0 0; animation:drift 60s linear infinite;
+  }
+  @keyframes drift{ to{ background-position:220px 220px; } }
+  .mono{ font-family:'Geist Mono','SFMono-Regular',Consolas,monospace; font-weight:400; }
+  a{color:inherit;}
+  :focus-visible{ outline:2px solid transparent; box-shadow:0 0 0 2px var(--bg), 0 0 0 4px var(--accent-a); border-radius:6px; }
+  .skip-link{ position:absolute; left:16px; top:10px; z-index:200; background:var(--fg); color:var(--bg); padding:8px 14px; border-radius:8px; text-decoration:none; font-size:14px; clip-path:inset(50%); width:1px; height:1px; overflow:hidden; white-space:nowrap; }
+  .skip-link:focus{ clip-path:none; width:auto; height:auto; overflow:visible; }
+
+  .wrap{max-width:1180px; margin:0 auto; padding:0 28px;}
+
+  header{ position:sticky; top:0; z-index:50; background:rgba(250,250,248,0.9); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+  nav.wrap{ display:flex; align-items:center; justify-content:space-between; height:68px; }
+  .logo{ display:flex; align-items:center; gap:9px; font-size:17px; letter-spacing:-0.01em; text-decoration:none; }
+  .logo-mark{ width:18px; height:18px; border-radius:50%; background:conic-gradient(from 200deg, var(--accent-a), var(--accent-b)); }
+  .nav-links{ display:flex; align-items:center; gap:30px; font-size:14.5px; color:var(--muted); }
+  .nav-links > a{ text-decoration:none; }
+  .nav-links > a:hover{ color:var(--fg); }
+  .nav-links > a.active{ color:var(--fg); }
+  .nav-cta{ display:inline-flex; align-items:center; gap:6px; background:var(--fg); color:var(--bg); padding:9px 16px; border-radius:999px; font-size:14px; text-decoration:none; white-space:nowrap; }
+  .nav-cta:hover{ opacity:0.85; }
+  @media (max-width:760px){ .nav-links{display:none;} }
+
+  .page-hero{ padding:56px 0 40px; text-align:center; }
+  .eyebrow{ display:inline-flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); border:1px solid var(--line-strong); background:var(--bg-raised); padding:6px 14px; border-radius:999px; margin-bottom:20px; }
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:linear-gradient(90deg,var(--accent-a),var(--accent-b)); }
+  h1{ font-size:clamp(28px, 5vw, 44px); font-weight:400; letter-spacing:-0.025em; margin:0 0 14px; }
+  .sub{ font-size:15.5px; color:var(--muted); max-width:520px; margin:0 auto; }
+
+  .layout{ display:grid; grid-template-columns:260px 1fr; gap:28px; padding-bottom:90px; align-items:start; }
+  @media (max-width:860px){ .layout{ grid-template-columns:1fr; } }
+
+  .sidebar{ background:var(--bg-raised); border:1px solid var(--line); border-radius:16px; padding:16px; position:sticky; top:88px; }
+  @media (max-width:860px){ .sidebar{ position:static; } }
+  .search-box{ display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:9px; padding:9px 12px; margin-bottom:16px; background:var(--bg); }
+  .search-box svg{ width:14px; height:14px; color:var(--muted); flex:0 0 auto; }
+  .search-box input{ border:none; background:transparent; outline:none; font-family:inherit; font-size:13.5px; width:100%; color:var(--fg); }
+  .cat-label{ font-size:11px; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted); padding:14px 10px 8px; }
+  .comp-list{ list-style:none; margin:0; padding:0; }
+  .comp-item{ margin-bottom:2px; }
+  .comp-btn{ display:flex; align-items:center; justify-content:space-between; width:100%; text-align:left; border:none; background:transparent; cursor:pointer; font-family:inherit; font-size:14px; color:var(--fg); padding:9px 10px; border-radius:8px; transition:background 0.15s ease; }
+  .comp-btn:hover{ background:var(--bg); }
+  .comp-btn.active{ background:var(--fg); color:var(--bg); }
+  .comp-btn .chev{ opacity:0; width:12px; height:12px; }
+  .comp-btn.active .chev{ opacity:1; }
+
+  .detail{ background:var(--bg-raised); border:1px solid var(--line); border-radius:18px; padding:36px; }
+  .illustration{ height:150px; display:flex; align-items:center; justify-content:center; margin-bottom:24px; border-bottom:1px solid var(--line); padding-bottom:24px; }
+  .illustration svg{ max-height:110px; }
+  .detail-head{ margin-bottom:24px; }
+  .detail-head h2{ font-size:24px; font-weight:400; letter-spacing:-0.02em; margin:0 0 8px; }
+  .detail-head p{ font-size:14.5px; color:var(--muted); margin:0; max-width:560px; line-height:1.6; }
+
+  .platform-tabbar{ display:inline-flex; gap:4px; background:var(--bg); border:1px solid var(--line); border-radius:11px; padding:4px; margin-bottom:26px; }
+  .ptab{ border:none; background:transparent; cursor:pointer; font-family:inherit; font-size:13.5px; color:var(--muted); padding:8px 18px; border-radius:8px; transition:background 0.2s ease, color 0.2s ease; }
+  .ptab[aria-selected="true"]{ background:var(--fg); color:var(--bg); }
+  .ptab:hover:not([aria-selected="true"]){ background:var(--line); color:var(--fg); }
+
+  .needs-list{ list-style:none; margin:0 0 28px; padding:0; display:flex; flex-direction:column; gap:10px; }
+  .needs-list li{ display:flex; gap:10px; align-items:flex-start; font-size:14px; line-height:1.55; }
+  .check-ic{ flex:0 0 auto; width:18px; height:18px; border-radius:50%; background:var(--good-bg); color:var(--good); display:flex; align-items:center; justify-content:center; margin-top:1px; }
+  .check-ic svg{ width:10px; height:10px; }
+
+  .section-label{ font-size:11.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin:0 0 12px; }
+
+  .code-block{ background:#0F0E0A; border-radius:12px; padding:16px 18px; font-family:'Geist Mono',monospace; font-size:12.5px; color:#E4E1D6; line-height:1.7; margin-bottom:28px; white-space:pre; overflow-x:auto; }
+
+  .mistakes-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
+  .mistakes-list li{ display:flex; gap:10px; align-items:flex-start; font-size:13.5px; color:var(--muted); line-height:1.55; }
+  .warn-ic{ flex:0 0 auto; width:18px; height:18px; border-radius:50%; background:var(--warn-bg); color:var(--warn); display:flex; align-items:center; justify-content:center; margin-top:1px; }
+  .warn-ic svg{ width:9px; height:9px; }
+
+  footer{ border-top:1px solid var(--line); padding:32px 0; text-align:center; font-size:12.5px; color:var(--muted); }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+<header>
+  <nav class="wrap" aria-label="Primary">
+    <a class="logo" href="aria-landing.html"><span class="logo-mark"></span>A11xyz</a>
+    <div class="nav-links">
+      <a href="how-it-works.html">How it works</a>
+      <a href="what-we-catch.html">What we catch</a>
+      <a href="learn.html">Learn</a>
+      <a href="faq.html">FAQ</a>
+    </div>
+    <a class="nav-cta" href="aria-landing.html">Run a free audit</a>
+  </nav>
+</header>
+
+<main id="main">
+  <div class="page-hero wrap">
+    <span class="eyebrow"><span class="dot"></span> Component reference</span>
+    <h1>Build it right the first time.</h1>
+    <p class="sub">Pick a component. See exactly what it needs to be accessible on web, iOS, and Android.</p>
+  </div>
+
+  <div class="wrap layout">
+
+    <aside class="sidebar">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="comp-search" placeholder="Search components" aria-label="Search components">
+      </div>
+      <div id="comp-list-container"></div>
+    </aside>
+
+    <section class="detail">
+      <div class="illustration" id="illustration"></div>
+      <div class="detail-head">
+        <h2 id="comp-name"></h2>
+        <p id="comp-desc"></p>
+      </div>
+
+      <div class="platform-tabbar" role="tablist" aria-label="Choose a platform">
+        <button class="ptab" role="tab" id="ptab-web" aria-selected="true" data-platform="web" tabindex="0">Web</button>
+        <button class="ptab" role="tab" id="ptab-ios" aria-selected="false" data-platform="ios" tabindex="-1">iOS</button>
+        <button class="ptab" role="tab" id="ptab-android" aria-selected="false" data-platform="android" tabindex="-1">Android</button>
+      </div>
+
+      <p class="section-label">What it needs</p>
+      <ul class="needs-list" id="needs-list"></ul>
+
+      <p class="section-label">Example</p>
+      <div class="code-block mono" id="code-example"></div>
+
+      <p class="section-label">Common mistakes</p>
+      <ul class="mistakes-list" id="mistakes-list"></ul>
+    </section>
+
+  </div>
+</main>
+
+<footer>More components added regularly &middot; based on WCAG 2.2, Apple HIG, and Android accessibility guidelines</footer>
+
+<script>
+  var CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+  var WARN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v8M12 17h.01"/></svg>';
+
+  var illustrations = {
+    button: '<svg viewBox="0 0 200 110" fill="none"><rect x="40" y="35" width="120" height="40" rx="10" fill="#17160F"/><rect x="60" y="51" width="80" height="8" rx="4" fill="#FAFAF8"/><rect x="26" y="21" width="148" height="68" rx="16" stroke="#3B6FF0" stroke-width="2" stroke-dasharray="4 4"/></svg>',
+    link: '<svg viewBox="0 0 200 110" fill="none"><rect x="40" y="42" width="120" height="10" rx="3" fill="#17160F"/><rect x="40" y="60" width="70" height="10" rx="3" fill="#17160F"/><rect x="40" y="72" width="70" height="2" fill="#3B6FF0"/></svg>',
+    chip: '<svg viewBox="0 0 200 110" fill="none"><rect x="30" y="35" width="140" height="40" rx="20" fill="#FFFFFF" stroke="#D8D3C6" stroke-width="1.5"/><circle cx="55" cy="55" r="9" fill="#12B3A8"/><path d="M51 55l3 3 6-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="72" y="50" width="60" height="10" rx="4" fill="#17160F" opacity="0.8"/><circle cx="150" cy="55" r="9" fill="#EFECE4"/><path d="M146 51l8 8M154 51l-8 8" stroke="#6E6B62" stroke-width="2" stroke-linecap="round"/></svg>',
+    checkbox: '<svg viewBox="0 0 200 110" fill="none"><rect x="35" y="40" width="26" height="26" rx="6" fill="#17160F"/><path d="M42 53l6 6 12-12" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="75" y="50" width="70" height="8" rx="3" fill="#17160F" opacity="0.75"/><rect x="35" y="78" width="26" height="26" rx="6" fill="none" stroke="#D8D3C6" stroke-width="2"/><rect x="75" y="88" width="70" height="8" rx="3" fill="#D8D3C6"/></svg>',
+    toggle: '<svg viewBox="0 0 200 110" fill="none"><rect x="35" y="30" width="60" height="30" rx="15" fill="url(#g1)"/><circle cx="80" cy="45" r="11" fill="#fff"/><rect x="35" y="70" width="60" height="30" rx="15" fill="#E7E3D9"/><circle cx="50" cy="85" r="11" fill="#fff"/><defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#3B6FF0"/><stop offset="1" stop-color="#12B3A8"/></linearGradient></defs></svg>',
+    modal: '<svg viewBox="0 0 200 110" fill="none"><rect x="10" y="10" width="180" height="90" rx="10" fill="#EFECE4"/><rect x="55" y="28" width="90" height="54" rx="10" fill="#FFFFFF" stroke="#D8D3C6" stroke-width="1.5"/><rect x="68" y="40" width="45" height="8" rx="3" fill="#17160F" opacity="0.8"/><circle cx="132" cy="43" r="8" fill="none" stroke="#3B6FF0" stroke-width="1.5" stroke-dasharray="2 2"/><path d="M129 40l6 6M135 40l-6 6" stroke="#6E6B62" stroke-width="1.5" stroke-linecap="round"/><rect x="68" y="60" width="60" height="6" rx="3" fill="#EFECE4"/></svg>'
+  };
+
+  var components = [
+    { id:'button', category:'Actions', name:'Button', description:'Any element that triggers an action on the current page, like submitting a form or opening a menu.',
+      web:{ needs:['Use a real <button> element, not a styled div or span', 'Icon-only buttons need an aria-label describing the action', 'Focus state is visible, not just a colour change on hover', 'Disabled buttons use the disabled attribute, not only reduced opacity'],
+        code:'&lt;button aria-label="Close menu"&gt;\n  &lt;svg aria-hidden="true"&gt;...&lt;/svg&gt;\n&lt;/button&gt;',
+        mistakes:['Using onclick on a &lt;div&gt; instead of a real button', 'Removing the default focus outline without replacing it'] },
+      ios:{ needs:['Use UIButton or SwiftUI Button, not a custom-drawn view acting as one', 'Icon-only buttons need an accessibilityLabel', 'Minimum 44x44pt tappable area, even if the visible button is smaller', 'Native controls get the .button trait automatically, custom views need it set manually'],
+        code:'Button(action: closeMenu) {\n  Image(systemName: "xmark")\n}\n.accessibilityLabel("Close menu")',
+        mistakes:['Building a tappable icon from a plain Image with no label', 'Shrinking the tap target below 44pt to fit a tight layout'] },
+      android:{ needs:['Use a native Button or MaterialButton', 'Icon-only buttons need a contentDescription', 'Minimum 48dp touch target', 'Keep it in the natural focus order, avoid importantForAccessibility="no" unless truly decorative'],
+        code:'&lt;Button\n  contentDescription="Close menu"\n  ... /&gt;',
+        mistakes:['Using a plain ImageView with a click listener instead of a Button', 'Touch targets under 48dp on dense toolbars'] } },
+
+    { id:'link', category:'Actions', name:'Link', description:'Text or an element that navigates somewhere, on the same page or to a new one.',
+      web:{ needs:['Use a real &lt;a href&gt;, not a span with a click handler', 'Link text describes the destination on its own, out of context', 'Focus and visited states are visible', 'Avoid opening new tabs without warning the user'],
+        code:'&lt;a href="/pricing"&gt;See pricing&lt;/a&gt;',
+        mistakes:['"Click here" or "read more" as the entire link text', 'Styling a span to look like a link but wiring it with JavaScript only'] },
+      ios:{ needs:['Use a native Link or UITextView with a data detector, not a plain label with a tap gesture', 'The .link trait should be present, native controls set this automatically', 'Link text alone should describe where it goes'],
+        code:'Link("See pricing", destination: URL(string: "https://example.com/pricing")!)',
+        mistakes:['Attaching a tap gesture to a Text view and calling it a link', 'Vague link text like "here" repeated across a screen'] },
+      android:{ needs:['Use a proper link widget or a Compose LinkAnnotation, not a plain clickable TextView with no role', 'contentDescription or visible text should describe the destination', 'Make sure TalkBack announces it as a link, not just "clickable"'],
+        code:'Text(buildAnnotatedString {\n  withLink(LinkAnnotation.Url(url)) {\n    append("See pricing")\n  }\n})',
+        mistakes:['Using setOnClickListener on a TextView with no accessibility role set', 'Relying on colour alone to show something is a link'] } },
+
+    { id:'chip', category:'Actions', name:'Chip', description:'A small, often removable or selectable, compact element, like a filter, tag, or category selector.',
+      web:{ needs:['Selectable chips use aria-pressed or aria-selected to expose state', 'Accessible name includes both the label and current state, e.g. "Blue, selected"', 'Operable by keyboard, Enter or Space toggles it', 'A remove icon inside a chip needs its own accessible name, e.g. "Remove Blue"'],
+        code:'&lt;button aria-pressed="true"&gt;\n  Blue\n&lt;/button&gt;',
+        mistakes:['Building a chip from a div with no role or keyboard handling', 'Only showing selected state with colour, with no text or icon change'] },
+      ios:{ needs:['accessibilityLabel includes the state, not just the label', 'Use the .selected trait when a chip is active', 'Keep the tap target at least 44pt even though chips are visually compact'],
+        code:'.accessibilityLabel("Blue")\n.accessibilityAddTraits(isSelected ? .isSelected : [])',
+        mistakes:['Leaving VoiceOver users unable to tell a chip is selected', 'Cramming several chips into a tap target under 44pt'] },
+      android:{ needs:['Prefer Material Chip components, they handle most of this out of the box', 'contentDescription reflects current state if you build a custom version', 'Test with TalkBack that selecting a chip is actually announced'],
+        code:'&lt;com.google.android.material.chip.Chip\n  android:checkable="true" ... /&gt;',
+        mistakes:['Rolling a fully custom chip view with no accessibility node info set', 'State changes that only update visually, with nothing announced'] } },
+
+    { id:'checkbox', category:'Inputs', name:'Checkbox', description:'A control for selecting one or more options from a set, or toggling a single item on or off.',
+      web:{ needs:['Use a real &lt;input type="checkbox"&gt; paired with a &lt;label&gt;', 'If custom-built, use role="checkbox" plus aria-checked, and handle the Space key', 'Checked state is shown by more than colour alone'],
+        code:'&lt;input type="checkbox" id="terms"&gt;\n&lt;label for="terms"&gt;Accept terms&lt;/label&gt;',
+        mistakes:['A label with no for attribute pointing to the checkbox', 'Custom checkboxes missing aria-checked entirely'] },
+      ios:{ needs:['Use a native toggle or checkbox-style control where possible', 'Set accessibilityTraits and accessibilityValue so state is announced', 'Group the control with its label so VoiceOver reads them together'],
+        code:'.accessibilityLabel("Accept terms")\n.accessibilityValue(isChecked ? "Checked" : "Not checked")',
+        mistakes:['A checkmark image with no state announced to VoiceOver', 'Label and control read as two separate, disconnected elements'] },
+      android:{ needs:['Use the native CheckBox widget rather than a custom drawable', 'contentDescription should describe what\'s being checked, not just say "checkbox"', 'State is announced automatically by native widgets, verify it still is if you restyle one'],
+        code:'&lt;CheckBox\n  android:text="Accept terms" ... /&gt;',
+        mistakes:['contentDescription that just repeats "checkbox" with no context', 'Custom-drawn checkboxes that drop native state announcements'] } },
+
+    { id:'toggle', category:'Inputs', name:'Toggle switch', description:'An on/off control for a single setting, distinct from a checkbox in that it usually applies immediately.',
+      web:{ needs:['Use role="switch" with aria-checked, not aria-pressed', 'Accessible name describes the setting, not just "on" or "off"', 'State change is reflected immediately in aria-checked, not just visually'],
+        code:'&lt;button role="switch" aria-checked="true"&gt;\n  Notifications\n&lt;/button&gt;',
+        mistakes:['Using aria-pressed instead of aria-checked for a switch', 'A colour-only on/off indicator with no accessible state'] },
+      ios:{ needs:['UISwitch or SwiftUI Toggle handle state announcement automatically, use them over a custom view', 'accessibilityLabel names the setting being controlled', 'Don\'t rely on switch colour alone to convey state'],
+        code:'Toggle("Notifications", isOn: $notificationsOn)',
+        mistakes:['A custom sliding view with no accessibilityValue set', 'Labels that say "Toggle" instead of naming the actual setting'] },
+      android:{ needs:['Use native Switch or SwitchCompat, which announce state changes by default', 'contentDescription names the setting, not the control type', 'Confirm the change is announced immediately when toggled with TalkBack on'],
+        code:'&lt;Switch\n  android:text="Notifications" ... /&gt;',
+        mistakes:['Custom-built sliders standing in for a switch with no accessibility wiring', 'State changes that update the UI but aren\'t announced'] } },
+
+    { id:'modal', category:'Overlays', name:'Modal / Dialog', description:'Content that appears above the page and requires a response before the user can continue.',
+      web:{ needs:['role="dialog" with aria-modal="true"', 'Focus moves into the dialog when it opens, and is trapped inside until it closes', 'aria-labelledby points to the dialog\'s heading', 'Escape closes it, and focus returns to whatever opened it'],
+        code:'&lt;div role="dialog" aria-modal="true" aria-labelledby="dTitle"&gt;\n  &lt;h2 id="dTitle"&gt;Confirm&lt;/h2&gt;\n&lt;/div&gt;',
+        mistakes:['Focus staying on the page behind the dialog after it opens', 'No way to close the dialog with just a keyboard'] },
+      ios:{ needs:['Present it as a real modal so VoiceOver understands the context has changed', 'Move accessibility focus to the dialog\'s title as it appears', 'Provide a clear, reachable dismiss control'],
+        code:'.sheet(isPresented: $showDialog) {\n  DialogView()\n    .accessibilityAddTraits(.isModal)\n}',
+        mistakes:['A custom overlay view that VoiceOver treats as part of the regular page', 'No dismiss control reachable without a specific gesture'] },
+      android:{ needs:['Use a real Dialog or BottomSheet so TalkBack announces the window change', 'Move accessibility focus to the dialog title on open', 'The back button should dismiss it, matching platform expectation'],
+        code:'&lt;Dialog onDismissRequest = { ... } &gt;\n  Text("Confirm")\n&lt;/Dialog&gt;',
+        mistakes:['An overlay drawn on top of content that isn\'t announced as a dialog at all', 'Back button doing nothing while the dialog is open'] } }
+  ];
+
+  var currentId = 'button';
+  var currentPlatform = 'web';
+
+  function renderSidebar(filter){
+    var container = document.getElementById('comp-list-container');
+    container.innerHTML = '';
+    var cats = {};
+    components.forEach(function(c){
+      if(filter && c.name.toLowerCase().indexOf(filter.toLowerCase()) === -1) return;
+      if(!cats[c.category]) cats[c.category] = [];
+      cats[c.category].push(c);
+    });
+    Object.keys(cats).forEach(function(cat){
+      var label = document.createElement('div');
+      label.className = 'cat-label';
+      label.textContent = cat;
+      container.appendChild(label);
+      var ul = document.createElement('ul');
+      ul.className = 'comp-list';
+      cats[cat].forEach(function(c){
+        var li = document.createElement('li');
+        li.className = 'comp-item';
+        var btn = document.createElement('button');
+        btn.className = 'comp-btn' + (c.id === currentId ? ' active' : '');
+        btn.innerHTML = '<span>' + c.name + '</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
+        btn.onclick = function(){ currentId = c.id; renderSidebar(document.getElementById('comp-search').value); renderDetail(); };
+        li.appendChild(btn);
+        ul.appendChild(li);
+      });
+      container.appendChild(ul);
+    });
+  }
+
+  function renderDetail(){
+    var c = components.find(function(x){ return x.id === currentId; });
+    document.getElementById('illustration').innerHTML = illustrations[c.id] || '';
+    document.getElementById('comp-name').textContent = c.name;
+    document.getElementById('comp-desc').textContent = c.description;
+
+    var data = c[currentPlatform];
+    document.getElementById('needs-list').innerHTML = data.needs.map(function(n){ return '<li><span class="check-ic">' + CHECK_SVG + '</span>' + n + '</li>'; }).join('');
+    document.getElementById('code-example').innerHTML = data.code;
+    document.getElementById('mistakes-list').innerHTML = data.mistakes.map(function(m){ return '<li><span class="warn-ic">' + WARN_SVG + '</span>' + m + '</li>'; }).join('');
+
+    ['web','ios','android'].forEach(function(p){
+      var tab = document.getElementById('ptab-' + p);
+      var selected = p === currentPlatform;
+      tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+      tab.tabIndex = selected ? 0 : -1;
+    });
+  }
+
+  document.getElementById('comp-search').addEventListener('input', function(e){ renderSidebar(e.target.value); });
+
+  var ptabs = Array.prototype.slice.call(document.querySelectorAll('.ptab'));
+  ptabs.forEach(function(tab){
+    tab.addEventListener('click', function(){ currentPlatform = tab.dataset.platform; renderDetail(); });
+    tab.addEventListener('keydown', function(e){
+      var idx = ptabs.indexOf(document.activeElement);
+      if(e.key === 'ArrowRight'){ e.preventDefault(); var n = ptabs[(idx+1)%ptabs.length]; currentPlatform = n.dataset.platform; renderDetail(); n.focus(); }
+      if(e.key === 'ArrowLeft'){ e.preventDefault(); var p = ptabs[(idx-1+ptabs.length)%ptabs.length]; currentPlatform = p.dataset.platform; renderDetail(); p.focus(); }
+    });
+  });
+
+  renderSidebar('');
+  renderDetail();
+</script>
+
+</body>
+</html>

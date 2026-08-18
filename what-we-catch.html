@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What we catch · Aria</title>
+<link rel="preconnect" href="https://fonts.cdnfonts.com">
+<link href="https://fonts.cdnfonts.com/css/geist-sans" rel="stylesheet">
+<link href="https://fonts.cdnfonts.com/css/geist-mono" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAFAF8; --bg-raised:#FFFFFF; --fg:#17160F; --muted:#5E5B52;
+    --line:#E7E3D9; --line-strong:#D8D3C6; --dot:#DEDACD;
+    --accent-a:#2150C2; --accent-b:#12B3A8;
+    --crit:#C8432A; --serious:#C87A2A; --moderate:#8A7010; --minor:#8A8676;
+    --good:#1E8F5F; --bad:#C8432A;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth; overflow-x:hidden;}
+  body{
+    margin:0; background:var(--bg); color:var(--fg); overflow-x:hidden;
+    font-family:'Geist Sans','Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-weight:400; -webkit-font-smoothing:antialiased; line-height:1.5;
+    background-image:radial-gradient(var(--dot) 1px, transparent 1px);
+    background-size:22px 22px; background-position:0 0; animation:drift 60s linear infinite;
+  }
+  @keyframes drift{ to{ background-position:220px 220px; } }
+  .reveal{ opacity:0; transform:translateY(14px); transition:opacity 0.6s cubic-bezier(.16,.8,.3,1), transform 0.6s cubic-bezier(.16,.8,.3,1); }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+  .stagger .reveal:nth-child(1){transition-delay:0s;} .stagger .reveal:nth-child(2){transition-delay:0.08s;}
+  .stagger .reveal:nth-child(3){transition-delay:0.16s;} .stagger .reveal:nth-child(4){transition-delay:0.24s;}
+  .stagger .reveal:nth-child(5){transition-delay:0.32s;} .stagger .reveal:nth-child(6){transition-delay:0.4s;}
+  .mono{ font-family:'Geist Mono','SFMono-Regular',Consolas,monospace; font-weight:400; }
+  a{color:inherit;}
+  ::selection{background:var(--accent-a); color:#fff;}
+  :focus-visible{ outline:2px solid transparent; box-shadow:0 0 0 2px var(--bg), 0 0 0 4px var(--accent-a); border-radius:6px; }
+  .skip-link{ position:absolute; left:16px; top:10px; z-index:200; background:var(--fg); color:var(--bg); padding:8px 14px; border-radius:8px; text-decoration:none; font-size:14px; clip-path:inset(50%); width:1px; height:1px; overflow:hidden; white-space:nowrap; }
+  .skip-link:focus{ clip-path:none; width:auto; height:auto; overflow:visible; }
+
+  .wrap{max-width:1080px; margin:0 auto; padding:0 28px;}
+
+  header{ position:sticky; top:0; z-index:50; background:rgba(250,250,248,0.86); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); box-shadow:0 8px 20px -18px rgba(23,22,15,0); transition:box-shadow 0.3s ease; }
+  header.scrolled{ box-shadow:0 8px 20px -14px rgba(23,22,15,0.15); }
+  nav.wrap{ display:flex; align-items:center; justify-content:space-between; height:68px; }
+  .logo{ display:flex; align-items:center; gap:9px; font-size:17px; letter-spacing:-0.01em; text-decoration:none; }
+  .logo-mark{ width:18px; height:18px; border-radius:50%; background:conic-gradient(from 200deg, var(--accent-a), var(--accent-b)); flex:0 0 auto; transition:transform 0.5s cubic-bezier(.16,.8,.3,1); }
+  .logo:hover .logo-mark{ transform:rotate(160deg); }
+  .nav-links{ display:flex; align-items:center; gap:30px; font-size:14.5px; color:var(--muted); }
+  .nav-links a{ text-decoration:none; position:relative; transition:color 0.2s ease; }
+  .nav-links a::after{ content:''; position:absolute; left:0; right:100%; bottom:-4px; height:1px; background:var(--fg); transition:right 0.25s cubic-bezier(.16,.8,.3,1); }
+  .nav-links a:hover{color:var(--fg);}
+  .nav-links a:hover::after{right:0;}
+  .nav-links a.active{color:var(--fg);}
+  .nav-links a.active::after{right:0; background:linear-gradient(90deg,var(--accent-a),var(--accent-b));}
+  .nav-cta{ display:inline-flex; align-items:center; gap:6px; background:var(--fg); color:var(--bg); padding:9px 16px; border-radius:999px; font-size:14px; text-decoration:none; white-space:nowrap; transition:opacity 0.2s ease, transform 0.2s ease; }
+  .nav-cta:hover{opacity:0.85; transform:translateY(-1px);}
+  .nav-cta-menu{display:none;}
+  .nav-toggle{
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+    width:40px; height:40px; margin-right:-8px;
+    border:none; background:transparent; padding:0; cursor:pointer;
+  }
+  .nav-toggle span{ display:block; width:18px; height:1.5px; background:var(--fg); border-radius:1px; transition:transform 0.2s ease, opacity 0.2s ease; }
+  .nav-toggle[aria-expanded="true"] span:nth-child(1){ transform:translateY(6.5px) rotate(45deg); }
+  .nav-toggle[aria-expanded="true"] span:nth-child(2){ opacity:0; }
+  .nav-toggle[aria-expanded="true"] span:nth-child(3){ transform:translateY(-6.5px) rotate(-45deg); }
+  @media (max-width:860px){
+    .wrap{padding:0 18px;}
+    .nav-toggle{display:inline-flex;}
+    header nav.wrap > .nav-cta{display:none;}
+    .nav-links{
+      display:none; position:absolute; top:100%; left:0; right:0;
+      flex-direction:column; align-items:stretch; gap:0;
+      padding:8px 18px 18px;
+      background:rgba(250,250,248,0.96); backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--line);
+    }
+    header.nav-open .nav-links{display:flex;}
+    .nav-links a{padding:12px 0; border-bottom:1px solid var(--line);}
+    .nav-links a::after{display:none;}
+    .nav-links a.nav-cta-menu{display:inline-flex; margin-top:14px; border-bottom:none; align-self:flex-start; padding:9px 16px;}
+    .page-hero{padding:48px 0 36px;}
+  }
+
+  .page-hero{ padding:72px 0 56px; text-align:center; }
+  .eyebrow{ display:inline-flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); border:1px solid var(--line-strong); background:var(--bg-raised); padding:6px 14px; border-radius:999px; margin-bottom:22px; }
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:linear-gradient(90deg,var(--accent-a),var(--accent-b)); animation:pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+  h1{ font-size:clamp(32px, 5.5vw, 52px); font-weight:400; letter-spacing:-0.025em; line-height:1.1; margin:0 0 18px; max-width:760px; margin-left:auto; margin-right:auto; }
+  .sub{ font-size:16.5px; color:var(--muted); max-width:520px; margin:0 auto; }
+
+  section{padding:0 0 88px;}
+
+  .catch-list{ display:flex; flex-direction:column; gap:14px; }
+  .catch-card{
+    background:var(--bg-raised); border:1px solid var(--line); border-radius:16px;
+    padding:30px; display:grid; grid-template-columns:1fr 1fr; gap:32px;
+    transition:border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .catch-card:hover{ border-color:var(--line-strong); box-shadow:0 14px 30px -22px rgba(23,22,15,0.25); }
+  .catch-head{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .catch-icon{
+    width:36px; height:36px; border-radius:9px; background:var(--bg);
+    border:1px solid var(--line-strong); display:flex; align-items:center; justify-content:center; flex:0 0 auto;
+  }
+  .catch-icon svg{width:17px; height:17px; stroke:var(--fg);}
+  .catch-head h3{ font-size:18px; font-weight:400; letter-spacing:-0.01em; margin:0; }
+  .catch-left p{ font-size:14px; color:var(--muted); margin:0 0 16px; line-height:1.6; }
+  .catch-wcag-list{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+  .catch-wcag{ font-size:12px; color:var(--muted); border:1px solid var(--line); border-radius:6px; padding:4px 9px; }
+  .catch-affects{ font-size:12.5px; color:var(--muted); }
+  .catch-affects b{ font-weight:400; color:var(--fg); }
+
+  .code-block{
+    background:#0F0E0A; border-radius:12px; padding:16px 18px;
+    font-family:'Geist Mono','SFMono-Regular',Consolas,monospace; font-size:12.5px;
+    color:#E4E1D6; line-height:1.7;
+  }
+  .code-line{white-space:pre;}
+  .code-label{ display:flex; align-items:center; gap:6px; font-size:11px; margin-bottom:8px; letter-spacing:0.02em; }
+  .code-label.bad{ color:#F0A18E; }
+  .code-label.good{ color:#8FD6B4; }
+  .code-label svg{width:12px; height:12px;}
+  .code-good{ margin-top:14px; padding-top:14px; border-top:1px dashed #2C2A22; }
+
+  @media (max-width:760px){ .catch-card{grid-template-columns:1fr;} }
+
+  .cta-band{ text-align:center; border-top:1px solid var(--line); padding:80px 0; }
+  .cta-band h2{ font-size:clamp(26px,4vw,36px); font-weight:400; letter-spacing:-0.02em; margin:0 0 28px; }
+  .btn{ display:inline-flex; align-items:center; gap:8px; background:var(--fg); color:var(--bg); text-decoration:none; padding:13px 24px; border-radius:9px; font-size:14.5px; transition:opacity 0.2s ease, transform 0.15s ease; }
+  .btn:hover{opacity:0.85;} .btn:active{transform:scale(0.97);}
+  .btn svg{width:14px; height:14px; transition:transform 0.25s ease;}
+  .btn:hover svg{transform:translateX(3px);}
+
+  footer{ border-top:1px solid var(--line); padding:32px 0; }
+  .foot-row{ display:flex; align-items:center; justify-content:space-between; font-size:13px; color:var(--muted); flex-wrap:wrap; gap:12px; }
+  .foot-row a{text-decoration:none;} .foot-row a:hover{color:var(--fg);}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+    .reveal{opacity:1 !important; transform:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+<header>
+  <nav class="wrap" aria-label="Primary">
+    <a class="logo" href="aria-landing.html"><span class="logo-mark"></span>A11xyz</a>
+    <div class="nav-links" id="nav-menu">
+      <a href="how-it-works.html">How it works</a>
+      <a href="what-we-catch.html" class="active">What we catch</a>
+      <a href="learn.html">Learn</a>
+      <a href="faq.html">FAQ</a>
+      <a class="nav-cta nav-cta-menu" href="aria-landing.html">Run a free audit</a>
+    </div>
+    <a class="nav-cta" href="aria-landing.html">Run a free audit</a>
+    <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Open menu">
+      <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+    </button>
+  </nav>
+</header>
+
+<main id="main">
+  <div class="page-hero wrap">
+    <span class="eyebrow reveal in"><span class="dot"></span> Coverage</span>
+    <h1 class="reveal in">Six categories, one page, every time.</h1>
+    <p class="sub reveal in">Every scan checks all six, mapped to the WCAG criteria they fail and who they affect.</p>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <div class="catch-list stagger">
+
+        <div class="catch-card reveal">
+          <div class="catch-left">
+            <div class="catch-head">
+              <div class="catch-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 13c1.2 1.5 2.6 2 4 2s2.8-.5 4-2"/><path d="M9 9h.01M15 9h.01"/></svg></div>
+              <h3>Missing ARIA &amp; labels</h3>
+            </div>
+            <p>Icon buttons, images, and custom controls that have no accessible name, so a screen reader has nothing to announce.</p>
+            <div class="catch-wcag-list">
+              <span class="catch-wcag mono">1.1.1</span>
+              <span class="catch-wcag mono">4.1.2</span>
+            </div>
+            <div class="catch-affects">Affects <b>screen reader users</b></div>
+          </div>
+          <div class="code-block">
+            <div class="code-label bad">✕ FLAGGED</div>
+            <div class="code-line">&lt;button&gt;<br>&nbsp;&nbsp;&lt;svg&gt;...&lt;/svg&gt;<br>&lt;/button&gt;</div>
+            <div class="code-good">
+              <div class="code-label good">✓ FIXED</div>
+              <div class="code-line">&lt;button aria-label="Close"&gt;<br>&nbsp;&nbsp;&lt;svg&gt;...&lt;/svg&gt;<br>&lt;/button&gt;</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="catch-card reveal">
+          <div class="catch-left">
+            <div class="catch-head">
+              <div class="catch-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="18" rx="1"/><rect x="13" y="3" width="8" height="18" rx="1" fill="currentColor" opacity="0.15"/></svg></div>
+              <h3>Colour contrast</h3>
+            </div>
+            <p>Text or interface elements that don't stand out enough from their background to meet WCAG AA thresholds.</p>
+            <div class="catch-wcag-list">
+              <span class="catch-wcag mono">1.4.3</span>
+              <span class="catch-wcag mono">1.4.11</span>
+            </div>
+            <div class="catch-affects">Affects <b>low vision users</b></div>
+          </div>
+          <div class="code-block">
+            <div class="code-label bad">✕ FLAGGED</div>
+            <div class="code-line">color: #9C9890;<br>background: #FAFAF8;<br><span class="mono">/* ratio 2.1:1 */</span></div>
+            <div class="code-good">
+              <div class="code-label good">✓ FIXED</div>
+              <div class="code-line">color: #6E6B62;<br>background: #FAFAF8;<br><span class="mono">/* ratio 4.6:1 */</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="catch-card reveal">
+          <div class="catch-left">
+            <div class="catch-head">
+              <div class="catch-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 7l2-2a5 5 0 0 0-7-7"/><path d="M14 11a5 5 0 0 0-7-7L5 6a5 5 0 0 0 7 7"/></svg></div>
+              <h3>Vague link text</h3>
+            </div>
+            <p>Links that only make sense with their surrounding text, which is a problem for anyone tabbing through a links list.</p>
+            <div class="catch-wcag-list">
+              <span class="catch-wcag mono">2.4.4</span>
+              <span class="catch-wcag mono">2.4.9</span>
+            </div>
+            <div class="catch-affects">Affects <b>screen reader &amp; keyboard users</b></div>
+          </div>
+          <div class="code-block">
+            <div class="code-label bad">✕ FLAGGED</div>
+            <div class="code-line">&lt;a href="/pricing"&gt;<br>&nbsp;&nbsp;Click here<br>&lt;/a&gt;</div>
+            <div class="code-good">
+              <div class="code-label good">✓ FIXED</div>
+              <div class="code-line">&lt;a href="/pricing"&gt;<br>&nbsp;&nbsp;See pricing<br>&lt;/a&gt;</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="catch-card reveal">
+          <div class="catch-left">
+            <div class="catch-head">
+              <div class="catch-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="11" rx="2"/><path d="M7 11h.01M11 11h.01M15 11h.01M8 15h8"/></svg></div>
+              <h3>No keyboard support</h3>
+            </div>
+            <p>Interactive elements built from a div or span instead of a real button or link, so they're invisible to the keyboard.</p>
+            <div class="catch-wcag-list">
+              <span class="catch-wcag mono">2.1.1</span>
+              <span class="catch-wcag mono">2.4.7</span>
+            </div>
+            <div class="catch-affects">Affects <b>keyboard-only users</b></div>
+          </div>
+          <div class="code-block">
+            <div class="code-label bad">✕ FLAGGED</div>
+            <div class="code-line">&lt;div onclick="submit()"&gt;<br>&nbsp;&nbsp;Submit<br>&lt;/div&gt;</div>
+            <div class="code-good">
+              <div class="code-label good">✓ FIXED</div>
+              <div class="code-line">&lt;button onclick="submit()"&gt;<br>&nbsp;&nbsp;Submit<br>&lt;/button&gt;</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="catch-card reveal">
+          <div class="catch-left">
+            <div class="catch-head">
+              <div class="catch-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 10h8M8 14h5"/></svg></div>
+              <h3>Unlabelled form fields</h3>
+            </div>
+            <p>Inputs with a placeholder but no real label, so screen reader users aren't told what to enter once they start typing.</p>
+            <div class="catch-wcag-list">
+              <span class="catch-wcag mono">1.3.1</span>
+              <span class="catch-wcag mono">3.3.2</span>
+            </div>
+            <div class="catch-affects">Affects <b>screen reader users</b></div>
+          </div>
+          <div class="code-block">
+            <div class="code-label bad">✕ FLAGGED</div>
+            <div class="code-line">&lt;input <br>&nbsp;&nbsp;placeholder="Email"&gt;</div>
+            <div class="code-good">
+              <div class="code-label good">✓ FIXED</div>
+              <div class="code-line">&lt;label for="email"&gt;Email&lt;/label&gt;<br>&lt;input id="email"&gt;</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="catch-card reveal">
+          <div class="catch-left">
+            <div class="catch-head">
+              <div class="catch-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h13"/></svg></div>
+              <h3>Heading &amp; structure</h3>
+            </div>
+            <p>Skipped heading levels and missing landmarks, which break the shortcuts screen reader users rely on to navigate a page.</p>
+            <div class="catch-wcag-list">
+              <span class="catch-wcag mono">1.3.1</span>
+              <span class="catch-wcag mono">2.4.6</span>
+            </div>
+            <div class="catch-affects">Affects <b>screen reader users</b></div>
+          </div>
+          <div class="code-block">
+            <div class="code-label bad">✕ FLAGGED</div>
+            <div class="code-line">&lt;h1&gt;Pricing&lt;/h1&gt;<br>&lt;h4&gt;Starter plan&lt;/h4&gt;</div>
+            <div class="code-good">
+              <div class="code-label good">✓ FIXED</div>
+              <div class="code-line">&lt;h1&gt;Pricing&lt;/h1&gt;<br>&lt;h2&gt;Starter plan&lt;/h2&gt;</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-band reveal">
+    <div class="wrap">
+      <h2>Find out what your site is missing.</h2>
+      <a class="btn" href="aria-landing.html">
+        Run a free audit
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-row">
+    <span>&copy; 2026 Aria</span>
+    <a class="mono" href="request-audit.html">Automated scan, not a legal compliance certification</a>
+    <a href="mailto:maevepepple@gmail.com">maevepepple@gmail.com</a>
+  </div>
+</footer>
+
+<script>
+  var revealEls = document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){ entry.target.classList.add('in'); io.unobserve(entry.target); }
+      });
+    }, {threshold:0.1, rootMargin:'0px 0px -40px 0px'});
+    revealEls.forEach(function(el){ if(!el.classList.contains('in')) io.observe(el); });
+  } else {
+    revealEls.forEach(function(el){ el.classList.add('in'); });
+  }
+  var header = document.querySelector('header');
+  var onScroll = function(){ header.classList.toggle('scrolled', window.scrollY > 8); };
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+  (function(){
+    var toggle = document.querySelector('.nav-toggle');
+    if(!header || !toggle) return;
+    function setOpen(open){
+      header.classList.toggle('nav-open', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    }
+    toggle.addEventListener('click', function(){
+      setOpen(!header.classList.contains('nav-open'));
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape') setOpen(false);
+    });
+    header.querySelectorAll('#nav-menu a').forEach(function(link){
+      link.addEventListener('click', function(){ setOpen(false); });
+    });
+    window.addEventListener('resize', function(){
+      if(window.matchMedia('(min-width:861px)').matches) setOpen(false);
+    });
+  })();
+</script>
+
+</body>
+</html>

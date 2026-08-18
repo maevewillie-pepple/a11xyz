@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learn accessibility · Aria</title>
+<link rel="preconnect" href="https://fonts.cdnfonts.com">
+<link href="https://fonts.cdnfonts.com/css/geist-sans" rel="stylesheet">
+<link href="https://fonts.cdnfonts.com/css/geist-mono" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAFAF8; --bg-raised:#FFFFFF; --fg:#17160F; --muted:#5E5B52;
+    --line:#E7E3D9; --line-strong:#D8D3C6; --dot:#DEDACD;
+    --accent-a:#2150C2; --accent-b:#12B3A8;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:'Geist Sans','Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-weight:400; -webkit-font-smoothing:antialiased; line-height:1.5;
+    background-image:radial-gradient(var(--dot) 1px, transparent 1px);
+    background-size:22px 22px; background-position:0 0; animation:drift 60s linear infinite;
+  }
+  @keyframes drift{ to{ background-position:220px 220px; } }
+  .reveal{ opacity:0; transform:translateY(14px); transition:opacity 0.5s cubic-bezier(.16,.8,.3,1), transform 0.5s cubic-bezier(.16,.8,.3,1); }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+  .stagger .reveal:nth-child(1){transition-delay:0s;} .stagger .reveal:nth-child(2){transition-delay:0.06s;}
+  .stagger .reveal:nth-child(3){transition-delay:0.12s;} .stagger .reveal:nth-child(4){transition-delay:0.18s;}
+  .stagger .reveal:nth-child(5){transition-delay:0.24s;} .stagger .reveal:nth-child(6){transition-delay:0.3s;}
+  .stagger .reveal:nth-child(7){transition-delay:0.36s;}
+  .mono{ font-family:'Geist Mono','SFMono-Regular',Consolas,monospace; font-weight:400; }
+  a{color:inherit;}
+  ::selection{background:var(--accent-a); color:#fff;}
+  :focus-visible{ outline:2px solid transparent; box-shadow:0 0 0 2px var(--bg), 0 0 0 4px var(--accent-a); border-radius:6px; }
+  .skip-link{ position:absolute; left:16px; top:10px; z-index:200; background:var(--fg); color:var(--bg); padding:8px 14px; border-radius:8px; text-decoration:none; font-size:14px; clip-path:inset(50%); width:1px; height:1px; overflow:hidden; white-space:nowrap; }
+  .skip-link:focus{ clip-path:none; width:auto; height:auto; overflow:visible; }
+
+  .wrap{max-width:1080px; margin:0 auto; padding:0 28px;}
+
+  header{ position:sticky; top:0; z-index:50; background:rgba(250,250,248,0.86); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); box-shadow:0 8px 20px -18px rgba(23,22,15,0); transition:box-shadow 0.3s ease; }
+  header.scrolled{ box-shadow:0 8px 20px -14px rgba(23,22,15,0.15); }
+  nav.wrap{ display:flex; align-items:center; justify-content:space-between; height:68px; }
+  .logo{ display:flex; align-items:center; gap:9px; font-size:17px; letter-spacing:-0.01em; text-decoration:none; }
+  .logo-mark{ width:18px; height:18px; border-radius:50%; background:conic-gradient(from 200deg, var(--accent-a), var(--accent-b)); flex:0 0 auto; transition:transform 0.5s cubic-bezier(.16,.8,.3,1); }
+  .logo:hover .logo-mark{ transform:rotate(160deg); }
+  .nav-links{ display:flex; align-items:center; gap:30px; font-size:14.5px; color:var(--muted); }
+  .nav-links a{ text-decoration:none; position:relative; transition:color 0.2s ease; }
+  .nav-links a::after{ content:''; position:absolute; left:0; right:100%; bottom:-4px; height:1px; background:var(--fg); transition:right 0.25s cubic-bezier(.16,.8,.3,1); }
+  .nav-links a:hover{color:var(--fg);}
+  .nav-links a:hover::after{right:0;}
+  .nav-links a.active{color:var(--fg);}
+  .nav-links a.active::after{right:0; background:linear-gradient(90deg,var(--accent-a),var(--accent-b));}
+  .nav-cta{ display:inline-flex; align-items:center; gap:6px; background:var(--fg); color:var(--bg); padding:9px 16px; border-radius:999px; font-size:14px; text-decoration:none; white-space:nowrap; transition:opacity 0.2s ease, transform 0.2s ease; }
+  .nav-cta:hover{opacity:0.85; transform:translateY(-1px);}
+  @media (max-width:760px){ .nav-links{display:none;} }
+
+  .page-hero{ padding:72px 0 20px; text-align:center; }
+  .eyebrow{ display:inline-flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); border:1px solid var(--line-strong); background:var(--bg-raised); padding:6px 14px; border-radius:999px; margin-bottom:22px; }
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:linear-gradient(90deg,var(--accent-a),var(--accent-b)); animation:pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+  h1{ font-size:clamp(32px, 5.5vw, 52px); font-weight:400; letter-spacing:-0.025em; line-height:1.1; margin:0 0 18px; max-width:640px; margin-left:auto; margin-right:auto; }
+  .sub{ font-size:16.5px; color:var(--muted); max-width:540px; margin:0 auto; }
+
+  .path-progress{ display:flex; justify-content:center; align-items:center; gap:10px; padding:36px 0 54px; font-size:12.5px; color:var(--muted); }
+  .path-progress .step{ display:flex; align-items:center; gap:6px; }
+  .path-progress .n{ width:20px; height:20px; border-radius:50%; border:1px solid var(--line-strong); display:flex; align-items:center; justify-content:center; font-family:'Geist Mono',monospace; font-size:10px; }
+  .path-progress .sep{ width:20px; height:1px; background:var(--line); }
+  @media (max-width:700px){ .path-progress{ display:none; } }
+
+  section{padding:0 0 90px;}
+  .card-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+  @media (max-width:900px){ .card-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:600px){ .card-grid{ grid-template-columns:1fr; } }
+
+  .learn-card{
+    display:block; text-decoration:none; color:inherit;
+    background:var(--bg-raised); border:1px solid var(--line); border-radius:18px;
+    padding:26px; position:relative; overflow:hidden;
+    transition:transform 0.22s cubic-bezier(.16,.8,.3,1), border-color 0.22s ease, box-shadow 0.22s ease;
+  }
+  .learn-card:hover{
+    transform:translateY(-4px);
+    border-color:var(--line-strong);
+    box-shadow:0 20px 40px -24px rgba(23,22,15,0.28);
+  }
+  .path-num{ font-size:11px; font-family:'Geist Mono',monospace; color:var(--muted); margin-bottom:16px; display:block; }
+  .learn-card-illo{ height:64px; margin-bottom:14px; display:flex; align-items:center; }
+  .learn-card-illo svg{ height:56px; }
+  .learn-card h2{ font-size:17px; font-weight:400; letter-spacing:-0.01em; margin:0 0 8px; }
+  .learn-card p{ font-size:13.5px; color:var(--muted); line-height:1.6; margin:0 0 18px; }
+  .learn-card-cta{ display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--fg); }
+  .learn-card-cta svg{ width:12px; height:12px; transition:transform 0.2s cubic-bezier(.16,.8,.3,1); }
+  .learn-card:hover .learn-card-cta svg{ transform:translateX(4px); }
+
+  .more-band{
+    max-width:1080px; margin:0 auto; text-align:center;
+    border-top:1px solid var(--line); padding-top:56px;
+  }
+  .more-band p{ font-size:13.5px; color:var(--muted); max-width:480px; margin:0 auto; line-height:1.65; }
+  .more-band a{ color:var(--accent-a); text-decoration:underline; text-underline-offset:3px; }
+
+  footer{ border-top:1px solid var(--line); padding:32px 0; }
+  .foot-row{ display:flex; align-items:center; justify-content:space-between; font-size:13px; color:var(--muted); flex-wrap:wrap; gap:12px; }
+  .foot-row a{text-decoration:none;} .foot-row a:hover{color:var(--fg);}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+    .reveal{opacity:1 !important; transform:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+<header>
+  <nav class="wrap" aria-label="Primary">
+    <a class="logo" href="aria-landing.html"><span class="logo-mark"></span>A11xyz</a>
+    <div class="nav-links">
+      <a href="how-it-works.html">How it works</a>
+      <a href="what-we-catch.html">What we catch</a>
+      <a href="learn.html" class="active">Learn</a>
+      <a href="faq.html">FAQ</a>
+    </div>
+    <a class="nav-cta" href="aria-landing.html">Run a free audit</a>
+  </nav>
+</header>
+
+<main id="main">
+  <div class="page-hero wrap">
+    <span class="eyebrow reveal in"><span class="dot"></span> Learn</span>
+    <h1 class="reveal in">Understand accessibility.</h1>
+    <p class="sub reveal in">Six paths, beginner to advanced. WCAG and platform standards underpin every one, translated into decisions you can actually act on.</p>
+  </div>
+
+  <section class="wrap">
+    <div class="card-grid stagger">
+
+      <a class="learn-card reveal" href="learn-what-is-accessibility.html">
+        <span class="path-num mono">PATH 01</span>
+        <div class="learn-card-illo">
+          <svg viewBox="0 0 90 64" fill="none">
+            <circle cx="45" cy="26" r="19" stroke="#3B6FF0" stroke-width="2" stroke-dasharray="3 4"/>
+            <circle cx="45" cy="26" r="8" fill="#17160F"/>
+            <rect x="24" y="52" width="42" height="5" rx="2.5" fill="#E7E3D9"/>
+          </svg>
+        </div>
+        <h2>Accessibility fundamentals</h2>
+        <p>What accessibility means, who it's for, and why it's a product, business, and legal issue, not just a design one.</p>
+        <span class="learn-card-cta">Start path <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+      <a class="learn-card reveal" href="learn-designing.html">
+        <span class="path-num mono">PATH 02</span>
+        <div class="learn-card-illo">
+          <svg viewBox="0 0 90 64" fill="none">
+            <rect x="20" y="10" width="50" height="34" rx="6" fill="#FFFFFF" stroke="#D8D3C6" stroke-width="1.5"/>
+            <rect x="27" y="19" width="18" height="5" rx="2.5" fill="#17160F" opacity="0.8"/>
+            <circle cx="56" cy="21.5" r="5.5" fill="none" stroke="#12B3A8" stroke-width="1.5" stroke-dasharray="2 2"/>
+            <rect x="27" y="32" width="34" height="4" rx="2" fill="#EFECE4"/>
+            <rect x="31" y="52" width="28" height="5" rx="2.5" fill="#E7E3D9"/>
+          </svg>
+        </div>
+        <h2>Designing for accessibility</h2>
+        <p>How POUR shows up in everyday design decisions, colour, focus, layout, forms, and what to specify for handoff.</p>
+        <span class="learn-card-cta">Start path <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+      <a class="learn-card reveal" href="learn-web.html">
+        <span class="path-num mono">PATH 03</span>
+        <div class="learn-card-illo">
+          <svg viewBox="0 0 90 64" fill="none">
+            <circle cx="45" cy="32" r="23" fill="none" stroke="#D8D3C6" stroke-width="1.5"/>
+            <path d="M22 32h46M45 9c7 6 7 40 0 46M45 9c-7 6-7 40 0 46" stroke="#D8D3C6" stroke-width="1.5"/>
+            <circle cx="45" cy="32" r="4.5" fill="#12B3A8"/>
+          </svg>
+        </div>
+        <h2>Web accessibility</h2>
+        <p>Semantic HTML, the accessibility tree, keyboard and focus, ARIA and when not to use it, screen reader testing.</p>
+        <span class="learn-card-cta">Start path <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+      <a class="learn-card reveal" href="learn-mobile.html">
+        <span class="path-num mono">PATH 04</span>
+        <div class="learn-card-illo">
+          <svg viewBox="0 0 90 64" fill="none">
+            <rect x="29" y="6" width="32" height="52" rx="6" fill="#FFFFFF" stroke="#D8D3C6" stroke-width="1.5"/>
+            <rect x="35" y="13" width="20" height="30" rx="2" fill="#EFECE4"/>
+            <circle cx="45" cy="50" r="2.7" fill="#D8D3C6"/>
+            <path d="M39 26l4 4 8-8" stroke="#3B6FF0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2>Mobile accessibility</h2>
+        <p>Not "web on a smaller screen." Where native iOS and Android diverge from web, and from each other.</p>
+        <span class="learn-card-cta">Start path <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+      <a class="learn-card reveal" href="learn-testing.html">
+        <span class="path-num mono">PATH 05</span>
+        <div class="learn-card-illo">
+          <svg viewBox="0 0 90 64" fill="none">
+            <circle cx="38" cy="28" r="16" fill="none" stroke="#D8D3C6" stroke-width="2"/>
+            <path d="M49 39l14 14" stroke="#D8D3C6" stroke-width="2" stroke-linecap="round"/>
+            <path d="M31 28l5 5 9-9" stroke="#12B3A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2>Accessibility testing</h2>
+        <p>Keyboard, zoom, contrast, and screen readers. What automated tools catch, and what still needs a human.</p>
+        <span class="learn-card-cta">Start path <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+      <a class="learn-card reveal" href="learn-product-teams.html">
+        <span class="path-num mono">PATH 06</span>
+        <div class="learn-card-illo">
+          <svg viewBox="0 0 90 64" fill="none">
+            <circle cx="16" cy="32" r="6" fill="#EFECE4" stroke="#D8D3C6"/>
+            <circle cx="38" cy="32" r="6" fill="#EFECE4" stroke="#D8D3C6"/>
+            <circle cx="60" cy="32" r="6" fill="#EFECE4" stroke="#D8D3C6"/>
+            <circle cx="80" cy="32" r="6" fill="#17160F"/>
+            <path d="M22 32h10M44 32h10M66 32h8" stroke="#D8D3C6" stroke-width="1.5" stroke-dasharray="2 3"/>
+          </svg>
+        </div>
+        <h2>Accessibility in product teams</h2>
+        <p>From discovery to release. Annotations, handoff, acceptance criteria, and making it everyone's job, not just one person's fix at the end.</p>
+        <span class="learn-card-cta">Start path <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="more-band reveal">
+      <p>Want to see what Aria actually flags in a scan? Check <a href="what-we-catch.html">what we catch</a>.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-row">
+    <span>&copy; 2026 Aria</span>
+    <a class="mono" href="request-audit.html">Automated scan, not a legal compliance certification</a>
+    <a href="mailto:maevepepple@gmail.com">maevepepple@gmail.com</a>
+  </div>
+</footer>
+
+<script>
+  var revealEls = document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){ if(entry.isIntersecting){ entry.target.classList.add('in'); io.unobserve(entry.target); } });
+    }, {threshold:0.1, rootMargin:'0px 0px -40px 0px'});
+    revealEls.forEach(function(el){ io.observe(el); });
+  } else {
+    revealEls.forEach(function(el){ el.classList.add('in'); });
+  }
+  var header = document.querySelector('header');
+  var onScroll = function(){ header.classList.toggle('scrolled', window.scrollY > 8); };
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+</script>
+
+</body>
+</html>
