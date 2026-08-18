@@ -7,6 +7,7 @@
   var submit = form.querySelector('button[type="submit"]');
   var slot = document.getElementById('turnstile-slot');
   var widgetId = null;
+  var mailKey = '';
 
   function showError(msg) {
     errorEl.hidden = false;
@@ -37,9 +38,25 @@
     document.head.appendChild(script);
   }
 
+  function mailBody(payload) {
+    var lines = [
+      'Type: ' + payload.type,
+      'Name: ' + payload.name,
+      'Email: ' + payload.email,
+    ];
+    if (payload.organisation) lines.push('Organisation: ' + payload.organisation);
+    if (payload.url) lines.push('Website: ' + payload.url);
+    if (payload.need) lines.push('Need: ' + payload.need);
+    lines.push('', payload.message);
+    return lines.join('\n');
+  }
+
   fetch('/contact/config')
     .then(function (res) { return res.ok ? res.json() : {}; })
-    .then(function (cfg) { mountTurnstile(cfg && cfg.turnstileSiteKey); })
+    .then(function (cfg) {
+      mailKey = (cfg && cfg.web3formsAccessKey) || '';
+      mountTurnstile(cfg && cfg.turnstileSiteKey);
+    })
     .catch(function () {});
 
   form.addEventListener('submit', function (e) {
@@ -57,6 +74,10 @@
       showError('Enter a valid email address.');
       return;
     }
+    if (!mailKey) {
+      showError('Email is not set up on this server. Email maevepepple@gmail.com instead.');
+      return;
+    }
 
     var payload = {
       type: form.type.value,
@@ -66,26 +87,42 @@
       organisation: form.organisation ? (form.organisation.value || '').trim() : '',
       url: form.url ? (form.url.value || '').trim() : '',
       need: (form.querySelector('input[name="need"]:checked') || {}).value || '',
-      company_url: form.company_url ? (form.company_url.value || '').trim() : '',
+      website_fax: form.website_fax ? (form.website_fax.value || '').trim() : '',
       turnstileToken: turnstileToken(),
     };
 
+    var subject = payload.type === 'audit'
+      ? 'Audit request from ' + name
+      : 'Product idea from ' + name;
+
     submit.disabled = true;
-    fetch('/contact', {
+    fetch('https://api.web3forms.com/submit', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        access_key: mailKey,
+        subject: subject,
+        from_name: name,
+        name: name,
+        email: email,
+        replyto: email,
+        message: mailBody(payload),
+        botcheck: payload.website_fax,
+      }),
     })
       .then(function (res) {
-        return res.text().then(function (text) {
-          var data = {};
-          try { data = text ? JSON.parse(text) : {}; } catch (e) { data = {}; }
-          if (!res.ok) {
-            throw new Error(data.error || 'Could not send. Email maevepepple@gmail.com instead.');
+        return res.json().then(function (data) {
+          if (!res.ok || !data || !data.success) {
+            throw new Error((data && data.message) || 'Could not send. Email maevepepple@gmail.com instead.');
           }
         });
       })
       .then(function () {
+        fetch('/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }).catch(function () {});
         form.hidden = true;
         thanks.hidden = false;
         thanks.setAttribute('tabindex', '-1');
@@ -94,7 +131,7 @@
       .catch(function (err) {
         var msg = (err && err.message) || '';
         if (!msg || msg === 'Failed to fetch' || /NetworkError|Load failed|JSON|Unexpected token/i.test(msg)) {
-          msg = 'Could not reach the server. Stop and start npm run dev, then try again, or email maevepepple@gmail.com.';
+          msg = 'Could not send. Email maevepepple@gmail.com instead.';
         }
         showError(msg);
         resetCaptcha();

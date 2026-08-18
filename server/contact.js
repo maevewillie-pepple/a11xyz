@@ -2,10 +2,6 @@ import { randomBytes } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-function contactTo() {
-  return process.env.CONTACT_TO || 'maevepepple@gmail.com';
-}
-
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_MAX = 8;
 const hits = new Map();
@@ -13,6 +9,7 @@ const hits = new Map();
 export function contactConfig() {
   return {
     turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || '',
+    web3formsAccessKey: (process.env.WEB3FORMS_ACCESS_KEY || '').trim(),
   };
 }
 
@@ -36,19 +33,6 @@ function isEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-function formatBody(record) {
-  const lines = [
-    `Type: ${record.type}`,
-    `Name: ${record.name}`,
-    `Email: ${record.email}`,
-  ];
-  if (record.organisation) lines.push(`Organisation: ${record.organisation}`);
-  if (record.url) lines.push(`Website: ${record.url}`);
-  if (record.need) lines.push(`Need: ${record.need}`);
-  lines.push('', record.message);
-  return lines.join('\n');
-}
-
 async function verifyTurnstile(token, ip) {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret) return { ok: true, skipped: true };
@@ -69,37 +53,13 @@ async function verifyTurnstile(token, ip) {
   return { ok: true };
 }
 
-async function sendWithWeb3Forms(record) {
-  const key = process.env.WEB3FORMS_ACCESS_KEY;
-  if (!key) return false;
-  const subject = record.type === 'audit'
-    ? `Audit request from ${record.name}`
-    : `Product idea from ${record.name}`;
-  const res = await fetch('https://api.web3forms.com/submit', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({
-      access_key: key,
-      subject,
-      from_name: record.name,
-      name: record.name,
-      email: record.email,
-      replyto: record.email,
-      message: formatBody(record),
-    }),
-    signal: AbortSignal.timeout(10_000),
-  });
-  const data = await res.json().catch(() => null);
-  return Boolean(res.ok && data?.success);
-}
-
 export async function handleContact(req, res, contactDir) {
   const ip = clientIp(req);
   if (rateLimited(ip)) {
     return res.status(429).json({ error: 'Too many messages. Try again in a few minutes.' });
   }
 
-  const honeypot = typeof req.body?.company_url === 'string' ? req.body.company_url.trim() : '';
+  const honeypot = typeof req.body?.website_fax === 'string' ? req.body.website_fax.trim() : '';
   if (honeypot) {
     return res.json({ ok: true });
   }
@@ -150,18 +110,6 @@ export async function handleContact(req, res, contactDir) {
     JSON.stringify(record, null, 2),
   );
 
-  let emailed = false;
-  try {
-    emailed = await sendWithWeb3Forms(record);
-  } catch (err) {
-    console.error('[contact] mail', err);
-  }
-
-  if (!emailed) {
-    console.warn('[contact] saved locally, email not sent', record.id);
-  } else {
-    console.log('[contact]', type, email, '→', contactTo());
-  }
-
-  res.json({ ok: true, emailed });
+  console.log('[contact] saved', type, email);
+  res.json({ ok: true });
 }
