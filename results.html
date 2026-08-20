@@ -118,8 +118,37 @@
     padding:14px 18px; border-bottom:1px solid var(--line);
     background:var(--bg-raised);
   }
-  .shot-topbar i{ width:8px; height:8px; border-radius:50%; background:var(--line-strong); font-style:normal; }
-  .shot-url{ margin-left:8px; font-size:12.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .shot-topbar i{ width:8px; height:8px; border-radius:50%; background:var(--line-strong); font-style:normal; flex:0 0 auto; }
+  .shot-rescan{
+    display:flex; align-items:center; gap:6px;
+    flex:1; min-width:0; margin-left:8px;
+  }
+  .shot-url{
+    flex:1; min-width:0; margin:0; padding:4px 0;
+    border:none; background:transparent;
+    font-size:12.5px; color:var(--muted);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .shot-url:focus{ outline:none; color:var(--fg); }
+  .shot-rescan:hover .shot-url, .shot-rescan:focus-within .shot-url{ color:var(--fg); }
+  .shot-go{
+    flex-shrink:0; width:28px; height:28px; padding:0;
+    border:none; border-radius:8px; cursor:pointer;
+    background:var(--fg); color:var(--bg);
+    display:inline-flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none;
+    transition:opacity 0.15s ease, transform 0.15s ease;
+  }
+  .shot-rescan:hover .shot-go,
+  .shot-rescan:focus-within .shot-go{
+    opacity:1; pointer-events:auto;
+  }
+  .shot-go:hover{ opacity:0.85; }
+  .shot-go:active{ transform:scale(0.97); }
+  .shot-go svg{ width:13px; height:13px; }
+  @media (prefers-reduced-motion: reduce){
+    .shot-go{ transition:none; }
+  }
 
   .shot-viewport{
     flex:1; min-height:420px; position:relative;
@@ -263,7 +292,12 @@
   <div class="shot-col">
     <div class="shot-topbar">
       <i></i><i></i><i></i>
-      <span class="shot-url mono" id="shot-url">Scanning…</span>
+      <form class="shot-rescan" id="shot-rescan">
+        <input class="shot-url mono" id="shot-url" type="text" inputmode="url" autocomplete="url" spellcheck="false" aria-label="Website URL to scan" value="Scanning…">
+        <button class="shot-go" type="submit" aria-label="Scan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </form>
     </div>
     <div class="shot-viewport is-loading" id="shot-viewport">
       <div class="shot-stage" id="shot-stage">
@@ -456,6 +490,8 @@
   document.addEventListener('keydown', function(e){
     if(!issues.length) return;
     if(document.querySelector('header.nav-open')) return;
+    var tag = (e.target && e.target.tagName) || '';
+    if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
     if(e.key === 'ArrowLeft' || e.key === 'ArrowUp'){
       e.preventDefault();
       showIssue(current - 1);
@@ -475,7 +511,7 @@
       showError('No URL was provided. Go back and paste a page to scan.');
       return;
     }
-    document.getElementById('shot-url').textContent = targetUrl;
+    document.getElementById('shot-url').value = targetUrl;
     document.title = 'Scanning · Aria';
 
     var controller = new AbortController();
@@ -528,6 +564,14 @@
   }
 
   run();
+
+  document.getElementById('shot-rescan').addEventListener('submit', function(e){
+    e.preventDefault();
+    var raw = (document.getElementById('shot-url').value || '').trim();
+    if(!raw) return;
+    var url = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
+    window.location.href = 'results.html?url=' + encodeURIComponent(url);
+  });
 </script>
 </body>
 </html>
