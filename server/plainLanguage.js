@@ -120,7 +120,7 @@ const RULES = {
     title: 'Page is missing a title',
     why: 'The document title (<title> in the head) is the name of the whole page. It appears in the browser tab, in history, and is the first thing a screen reader says on load. Without it, every tab sounds like the URL.',
     fixText: 'Add a unique, descriptive <title> in the document head.',
-    fixCode: '<title>Pricing · Aria</title>',
+    fixCode: '<title>Pricing · A11xyz</title>',
   },
   'html-has-lang': {
     category: 'Heading & structure',

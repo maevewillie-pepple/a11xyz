@@ -3,7 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Scan results · Aria</title>
+<title>Scan results · A11xyz</title>
+<meta name="application-name" content="A11xyz">
+<meta name="apple-mobile-web-app-title" content="A11xyz">
+<meta name="description" content="Accessibility scan results from A11xyz, in reading order, with plain-language fixes.">
+<link rel="canonical" href="https://a11xyz.com/results.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="A11xyz">
+<meta property="og:title" content="Scan results · A11xyz">
+<meta property="og:description" content="Accessibility scan results from A11xyz, in reading order, with plain-language fixes.">
+<meta property="og:url" content="https://a11xyz.com/results.html">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Scan results · A11xyz">
+<meta name="twitter:description" content="Accessibility scan results from A11xyz, in reading order, with plain-language fixes.">
 <link rel="preconnect" href="https://fonts.cdnfonts.com">
 <link href="https://fonts.cdnfonts.com/css/geist-sans" rel="stylesheet">
 <link href="https://fonts.cdnfonts.com/css/geist-mono" rel="stylesheet">
@@ -512,7 +524,7 @@
       return;
     }
     document.getElementById('shot-url').value = targetUrl;
-    document.title = 'Scanning · Aria';
+    document.title = 'Scanning · A11xyz';
 
     var controller = new AbortController();
     var timer = setTimeout(function(){ controller.abort(); }, 90000);
@@ -541,7 +553,7 @@
         shotImage.hidden = false;
         shotImage.src = data.screenshot;
       }
-      document.title = 'Scan results · Aria';
+      document.title = 'Scan results · A11xyz';
 
       if(!issues.length){
         document.getElementById('issue-empty').hidden = false;
