@@ -84,7 +84,14 @@ app.get('/faq.html', (_req, res) => sendStatic(res, 'faq.html'));
 app.get('/request-audit.html', (_req, res) => sendStatic(res, 'request-audit.html'));
 app.get('/whats-next.html', (_req, res) => sendStatic(res, 'whats-next.html'));
 app.get('/contact-form.js', (_req, res) => sendStatic(res, 'contact-form.js'));
+app.get('/analytics.js', (_req, res) => sendStatic(res, 'analytics.js'));
 app.get('/contact/config', (_req, res) => res.json(contactConfig()));
+app.get('/analytics/config', (_req, res) =>
+  res.json({
+    posthogKey: (process.env.VITE_POSTHOG_KEY || process.env.POSTHOG_KEY || '').trim(),
+    posthogHost: (process.env.VITE_POSTHOG_HOST || process.env.POSTHOG_HOST || '').trim(),
+  }),
+);
 
 async function runAudit(url) {
   const scan = await scanUrl(url);
@@ -146,6 +153,9 @@ app.get('/audit', async (req, res) => {
 
 const server = app.listen(PORT, HOST, () => {
   console.log(`Aria server listening on http://${HOST}:${PORT}`);
+  if (!(process.env.VITE_POSTHOG_KEY || process.env.POSTHOG_KEY) || !(process.env.VITE_POSTHOG_HOST || process.env.POSTHOG_HOST)) {
+    console.warn('[analytics] PostHog key/host missing: set VITE_POSTHOG_KEY and VITE_POSTHOG_HOST');
+  }
   if (!process.env.WEB3FORMS_ACCESS_KEY) {
     console.warn('[contact] WEB3FORMS_ACCESS_KEY missing: copy .env.example to .env');
   }

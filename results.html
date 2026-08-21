@@ -518,6 +518,15 @@
     if(issues[current]) positionHighlight(issues[current]);
   });
 
+  window.a11xyzQueue = window.a11xyzQueue || [];
+  window.a11xyzTrack = window.a11xyzTrack || function(event, properties){
+    if (!event) return;
+    window.a11xyzQueue.push([event, properties || {}]);
+  };
+  function track(event, properties){
+    window.a11xyzTrack(event, properties);
+  }
+
   async function run(){
     if(!targetUrl){
       showError('No URL was provided. Go back and paste a page to scan.');
@@ -525,6 +534,7 @@
     }
     document.getElementById('shot-url').value = targetUrl;
     document.title = 'Scanning · A11xyz';
+    track('audit_requested');
 
     var controller = new AbortController();
     var timer = setTimeout(function(){ controller.abort(); }, 90000);
@@ -554,6 +564,7 @@
         shotImage.src = data.screenshot;
       }
       document.title = 'Scan results · A11xyz';
+      track('audit_completed', { violation_count: issues.length });
 
       if(!issues.length){
         document.getElementById('issue-empty').hidden = false;
@@ -569,6 +580,9 @@
       var message = err && err.name === 'AbortError'
         ? 'The scan timed out. The page may be unreachable or taking too long to load.'
         : (err && err.message) || 'Could not complete the scan.';
+      track('audit_failed', {
+        failure_type: err && err.name === 'AbortError' ? 'timeout' : (err instanceof TypeError ? 'network' : 'request'),
+      });
       showError(message);
     } finally {
       clearTimeout(timer);
@@ -585,5 +599,6 @@
     window.location.href = 'results.html?url=' + encodeURIComponent(url);
   });
 </script>
+<script src="analytics.js" defer></script>
 </body>
 </html>

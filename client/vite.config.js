@@ -35,7 +35,7 @@ function serveMarketingPages() {
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const url = (req.url || '').split('?')[0]
-        if (url === '/contact' || url.startsWith('/contact/')) {
+        if (url === '/contact' || url.startsWith('/contact/') || url === '/analytics' || url.startsWith('/analytics/')) {
           next()
           return
         }
@@ -48,8 +48,8 @@ function serveMarketingPages() {
           sendHtml(res, path.join(repoRoot, name))
           return
         }
-        if (name === 'contact-form.js') {
-          const file = path.join(repoRoot, 'contact-form.js')
+        if (name === 'contact-form.js' || name === 'analytics.js') {
+          const file = path.join(repoRoot, name)
           if (fs.existsSync(file)) {
             res.setHeader('Content-Type', 'application/javascript; charset=utf-8')
             fs.createReadStream(file).pipe(res)
@@ -74,6 +74,7 @@ function serveMarketingPages() {
         fs.copyFileSync(path.join(repoRoot, name), path.join(outDir, name))
       }
       fs.copyFileSync(path.join(repoRoot, 'contact-form.js'), path.join(outDir, 'contact-form.js'))
+      fs.copyFileSync(path.join(repoRoot, 'analytics.js'), path.join(outDir, 'analytics.js'))
       const illoSrc = path.join(repoRoot, 'illustrations')
       const illoDest = path.join(outDir, 'illustrations')
       fs.mkdirSync(illoDest, { recursive: true })
@@ -87,6 +88,7 @@ function serveMarketingPages() {
 }
 
 export default defineConfig({
+  envDir: repoRoot,
   plugins: [react(), serveMarketingPages()],
   server: {
     port: 5173,
@@ -98,6 +100,11 @@ export default defineConfig({
       },
       '/health': 'http://127.0.0.1:3001',
       '/contact': {
+        target: 'http://127.0.0.1:3001',
+        timeout: 20_000,
+        proxyTimeout: 20_000,
+      },
+      '/analytics': {
         target: 'http://127.0.0.1:3001',
         timeout: 20_000,
         proxyTimeout: 20_000,

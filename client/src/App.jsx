@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react'
+import posthog from 'posthog-js'
 import Landing from './components/Landing.jsx'
 import ReportSummary from './components/ReportSummary.jsx'
 import IssueCard from './components/IssueCard.jsx'
+
+const analyticsEnabled = Boolean(import.meta.env.VITE_POSTHOG_KEY && import.meta.env.VITE_POSTHOG_HOST)
+
+function captureAuditEvent(event, properties) {
+  if (analyticsEnabled) posthog.capture(event, properties)
+}
 
 function normalizeAuditUrl(value) {
   const trimmed = value.trim()
@@ -42,6 +49,7 @@ export default function App() {
     setStatus('scanning')
     setError('')
     setRaw(null)
+    captureAuditEvent('audit_requested')
 
     try {
       const res = await fetch('/audit', {
@@ -53,9 +61,15 @@ export default function App() {
       if (!res.ok) {
         throw new Error(data.detail || data.error || `Request failed (${res.status})`)
       }
+      const violationCount = Array.isArray(data.violations) ? data.violations.length : 0
+      const passCount = Array.isArray(data.passes) ? data.passes.length : 0
+      captureAuditEvent('audit_completed', { violation_count: violationCount, pass_count: passCount })
       setRaw(data)
       setStatus('done')
     } catch (err) {
+      captureAuditEvent('audit_failed', {
+        failure_type: err instanceof TypeError ? 'network' : 'request',
+      })
       setStatus('error')
       setError(err instanceof Error ? err.message : 'Audit failed')
     }
