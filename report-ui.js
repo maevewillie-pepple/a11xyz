@@ -129,7 +129,7 @@ async function submitWaitlist(event) {
   errorEl.hidden = true;
   const name = ($('waitlist-name').value || '').trim() || 'Waitlist';
   const email = ($('waitlist-email').value || '').trim();
-  const fax = ($('waitlist-fax').value || '').trim();
+  const honeypot = ($('waitlist-hp').value || '').trim();
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     errorEl.hidden = false;
     errorEl.textContent = 'Enter a valid email address.';
@@ -139,40 +139,49 @@ async function submitWaitlist(event) {
   const submit = $('waitlist-submit');
   submit.disabled = true;
   try {
+    if (honeypot) {
+      $('waitlist-form').hidden = true;
+      const thanks = $('waitlist-thanks');
+      thanks.hidden = false;
+      thanks.focus();
+      return;
+    }
+
     const cfgRes = await fetch('/contact/config');
     const cfg = cfgRes.ok ? await cfgRes.json() : {};
     const mailKey = (cfg && cfg.web3formsAccessKey) || '';
-    const payload = {
-      type: 'pro-waitlist',
-      name,
-      email,
-      message: 'Join Pro waitlist',
-      url: scan && scan.url ? scan.url : '',
-      website_fax: fax,
-    };
-    if (mailKey) {
-      const mailed = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          access_key: mailKey,
-          subject: 'Pro waitlist from ' + name,
-          from_name: name,
-          name,
-          email,
-          replyto: email,
-          message: 'Join Pro waitlist\nEmail: ' + email + (payload.url ? '\nSite: ' + payload.url : ''),
-          botcheck: fax,
-        }),
-      });
-      const data = await mailed.json().catch(() => ({}));
-      if (!mailed.ok || !data.success) throw new Error('mail');
-    }
+    if (!mailKey) throw new Error('mail');
+
+    const site = scan && scan.url ? scan.url : '';
+    const mailed = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        access_key: mailKey,
+        subject: 'A11xyz Pro waitlist from ' + name,
+        from_name: 'A11xyz',
+        name,
+        email,
+        replyto: email,
+        message: 'Join Pro waitlist\nEmail: ' + email + (site ? '\nSite: ' + site : ''),
+      }),
+    });
+    const data = await mailed.json().catch(() => ({}));
+    if (!mailed.ok || !data.success) throw new Error('mail');
+
     await fetch('/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+      body: JSON.stringify({
+        type: 'pro-waitlist',
+        name,
+        email,
+        message: 'Join Pro waitlist',
+        url: site,
+        website_fax: '',
+      }),
+    }).catch(() => {});
+
     $('waitlist-form').hidden = true;
     const thanks = $('waitlist-thanks');
     thanks.hidden = false;
