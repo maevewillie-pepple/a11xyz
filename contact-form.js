@@ -59,6 +59,12 @@
     })
     .catch(function () {});
 
+  var urlField = form.querySelector('[name="url"]');
+  if (urlField) {
+    var fromQuery = new URLSearchParams(window.location.search).get('url');
+    if (fromQuery && !urlField.value) urlField.value = fromQuery;
+  }
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     errorEl.hidden = true;

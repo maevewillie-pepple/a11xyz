@@ -13,17 +13,26 @@ function captureAuditEvent(event, properties) {
 function normalizeAuditUrl(value) {
   const trimmed = value.trim()
   if (!trimmed) return ''
+  let parsed
   try {
-    const parsed = new URL(trimmed)
-    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return parsed.href
-  } catch {
-    // fall through and try https://
-  }
-  try {
-    return new URL(`https://${trimmed}`).href
+    parsed = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed.replace(/^\/\//, '')}`)
   } catch {
     return ''
   }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return ''
+  const host = parsed.hostname
+  if (
+    host &&
+    host !== 'localhost' &&
+    host.includes('.') &&
+    !host.toLowerCase().startsWith('www.') &&
+    !/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)
+  ) {
+    const parts = host.split('.')
+    const isApex = parts.length === 2 || (parts.length === 3 && /^(co|com|org|net|gov|ac|edu)$/i.test(parts[1]))
+    if (isApex) parsed.hostname = `www.${host}`
+  }
+  return parsed.href
 }
 
 export default function App() {

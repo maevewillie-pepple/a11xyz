@@ -64,16 +64,30 @@ export async function handleContact(req, res, contactDir) {
     return res.json({ ok: true });
   }
 
-  const type = req.body?.type === 'whats-next' ? 'whats-next' : req.body?.type === 'audit' ? 'audit' : '';
+  const type = req.body?.type === 'whats-next'
+    ? 'whats-next'
+    : req.body?.type === 'audit'
+      ? 'audit'
+      : req.body?.type === 'pro-waitlist'
+        ? 'pro-waitlist'
+        : '';
   const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
   const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
-  const message = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
+  const message = typeof req.body?.message === 'string'
+    ? req.body.message.trim()
+    : type === 'pro-waitlist'
+      ? 'Join Pro waitlist'
+      : '';
   const url = typeof req.body?.url === 'string' ? req.body.url.trim() : '';
   const organisation = typeof req.body?.organisation === 'string' ? req.body.organisation.trim() : '';
   const need = typeof req.body?.need === 'string' ? req.body.need.trim() : '';
   const token = typeof req.body?.turnstileToken === 'string' ? req.body.turnstileToken.trim() : '';
 
-  if (!type || !name || !email || !message) {
+  if (type === 'pro-waitlist') {
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required.' });
+    }
+  } else if (!type || !name || !email || !message) {
     return res.status(400).json({ error: 'Name, email, and a message are required.' });
   }
   if (!isEmail(email) || name.length > 200 || email.length > 200 || message.length > 4000) {
@@ -83,20 +97,22 @@ export async function handleContact(req, res, contactDir) {
     return res.status(400).json({ error: 'Check the form and try again.' });
   }
 
-  try {
-    const captcha = await verifyTurnstile(token, ip);
-    if (!captcha.ok) {
-      return res.status(400).json({ error: captcha.error });
+  if (type !== 'pro-waitlist') {
+    try {
+      const captcha = await verifyTurnstile(token, ip);
+      if (!captcha.ok) {
+        return res.status(400).json({ error: captcha.error });
+      }
+    } catch (err) {
+      console.error('[contact] turnstile', err);
+      return res.status(502).json({ error: 'The captcha check could not run. Try again.' });
     }
-  } catch (err) {
-    console.error('[contact] turnstile', err);
-    return res.status(502).json({ error: 'The captcha check could not run. Try again.' });
   }
 
   const record = {
     id: randomBytes(8).toString('hex'),
     type,
-    name,
+    name: name || (type === 'pro-waitlist' ? 'Waitlist' : name),
     email,
     url,
     organisation,

@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -29,13 +29,18 @@ function sendHtml(res, file) {
   fs.createReadStream(file).pipe(res)
 }
 
-function serveMarketingPages() {
+function serveMarketingPages(posthogConfig) {
   return {
     name: 'serve-marketing-pages',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const url = (req.url || '').split('?')[0]
-        if (url === '/contact' || url.startsWith('/contact/') || url === '/analytics' || url.startsWith('/analytics/')) {
+        if (url === '/analytics/config') {
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.end(JSON.stringify(posthogConfig))
+          return
+        }
+        if (url === '/contact' || url.startsWith('/contact/') || url === '/report' || url.startsWith('/report/')) {
           next()
           return
         }
@@ -48,7 +53,13 @@ function serveMarketingPages() {
           sendHtml(res, path.join(repoRoot, name))
           return
         }
-        if (name === 'contact-form.js' || name === 'analytics.js') {
+        if (
+          name === 'contact-form.js' ||
+          name === 'analytics.js' ||
+          name === 'report-model.js' ||
+          name === 'report-layout.js' ||
+          name === 'report-ui.js'
+        ) {
           const file = path.join(repoRoot, name)
           if (fs.existsSync(file)) {
             res.setHeader('Content-Type', 'application/javascript; charset=utf-8')
@@ -75,6 +86,9 @@ function serveMarketingPages() {
       }
       fs.copyFileSync(path.join(repoRoot, 'contact-form.js'), path.join(outDir, 'contact-form.js'))
       fs.copyFileSync(path.join(repoRoot, 'analytics.js'), path.join(outDir, 'analytics.js'))
+      fs.copyFileSync(path.join(repoRoot, 'report-model.js'), path.join(outDir, 'report-model.js'))
+      fs.copyFileSync(path.join(repoRoot, 'report-layout.js'), path.join(outDir, 'report-layout.js'))
+      fs.copyFileSync(path.join(repoRoot, 'report-ui.js'), path.join(outDir, 'report-ui.js'))
       const illoSrc = path.join(repoRoot, 'illustrations')
       const illoDest = path.join(outDir, 'illustrations')
       fs.mkdirSync(illoDest, { recursive: true })
@@ -87,31 +101,39 @@ function serveMarketingPages() {
   }
 }
 
-export default defineConfig({
-  envDir: repoRoot,
-  plugins: [react(), serveMarketingPages()],
-  server: {
-    port: 5173,
-    proxy: {
-      '/audit': {
-        target: 'http://127.0.0.1:3001',
-        timeout: 120_000,
-        proxyTimeout: 120_000,
-      },
-      '/health': 'http://127.0.0.1:3001',
-      '/contact': {
-        target: 'http://127.0.0.1:3001',
-        timeout: 20_000,
-        proxyTimeout: 20_000,
-      },
-      '/analytics': {
-        target: 'http://127.0.0.1:3001',
-        timeout: 20_000,
-        proxyTimeout: 20_000,
-      },
-      '/screenshots': {
-        target: 'http://127.0.0.1:3001',
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, repoRoot, '')
+  const posthogConfig = {
+    posthogKey: (env.VITE_POSTHOG_KEY || env.POSTHOG_KEY || '').trim(),
+    posthogHost: (env.VITE_POSTHOG_HOST || env.POSTHOG_HOST || '').trim(),
+  }
+
+  return {
+    envDir: repoRoot,
+    plugins: [react(), serveMarketingPages(posthogConfig)],
+    server: {
+      port: 5173,
+      proxy: {
+        '/audit': {
+          target: 'http://127.0.0.1:3001',
+          timeout: 120_000,
+          proxyTimeout: 120_000,
+        },
+        '/health': 'http://127.0.0.1:3001',
+        '/contact': {
+          target: 'http://127.0.0.1:3001',
+          timeout: 20_000,
+          proxyTimeout: 20_000,
+        },
+        '/report': {
+          target: 'http://127.0.0.1:3001',
+          timeout: 60_000,
+          proxyTimeout: 60_000,
+        },
+        '/screenshots': {
+          target: 'http://127.0.0.1:3001',
+        },
       },
     },
-  },
+  }
 })

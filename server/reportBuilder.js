@@ -30,6 +30,12 @@ function roundBox(box) {
   };
 }
 
+function snippetHtml(html) {
+  if (!html) return '';
+  const compact = String(html).replace(/\s+/g, ' ').trim();
+  return compact.length > 240 ? `${compact.slice(0, 237)}...` : compact;
+}
+
 /**
  * Split axe-core's rule-grouped violations into one issue per element,
  * sorted in document (reading) order.
@@ -47,11 +53,13 @@ export function buildReport({ url, nodes, pageSize, screenshotUrl }) {
     .map((node) => {
       const copy = copyForRule(node.ruleId, node, node);
       return {
+        ruleId: node.ruleId || '',
         severity: mapSeverity(node.impact),
         category: copy.category,
         wcag: wcagFromTags(node.tags) || copy.wcag || '',
         title: copy.title,
         selector: node.selector,
+        html: snippetHtml(node.html),
         why: copy.why,
         fixText: copy.fixText,
         fixCode: copy.fixCode,

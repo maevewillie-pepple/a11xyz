@@ -11,4 +11,5 @@ server/screenshots/*.png
 !server/screenshots/.gitkeep
 server/contact-submissions/*.json
 !server/contact-submissions/.gitkeep
+.tmp-report-tests/
 

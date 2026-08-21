@@ -1,6 +1,7 @@
 {
   "name": "aria",
   "private": true,
+  "type": "module",
   "scripts": {
     "start": "node server/index.js",
     "server": "node --watch server/index.js",

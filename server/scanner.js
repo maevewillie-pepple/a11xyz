@@ -1,5 +1,6 @@
 import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
+import { chromiumLaunchOptions } from './playwrightBrowser.js';
 
 const require = createRequire(import.meta.url);
 const axe = require('axe-core');
@@ -20,6 +21,146 @@ function lastSelector(target) {
   if (!Array.isArray(target) || target.length === 0) return '';
   const last = target[target.length - 1];
   return typeof last === 'string' ? last : '';
+}
+
+/**
+ * Runs in the page. Flags visible text below 12px (readability / WCAG 1.4.4).
+ * Touch targets are covered by axe `target-size` (24px, WCAG 2.5.8).
+ */
+function collectSizeIssues() {
+  const MIN_FONT_PX = 12;
+  const MAX_TEXT_ISSUES = 60;
+  const SKIP_TAGS = new Set([
+    'SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'HEAD', 'META', 'LINK',
+    'BR', 'HR', 'IMG', 'VIDEO', 'AUDIO', 'CANVAS', 'IFRAME', 'SVG', 'PATH',
+    'SOURCE', 'TRACK',
+  ]);
+
+  function uniqueSelector(el) {
+    if (el.id && document.querySelectorAll(`#${CSS.escape(el.id)}`).length === 1) {
+      return `#${CSS.escape(el.id)}`;
+    }
+    const chain = [];
+    let node = el;
+    while (node && node.nodeType === 1 && node !== document.documentElement) {
+      let part = node.nodeName.toLowerCase();
+      const parent = node.parentElement;
+      if (parent) {
+        const siblings = [...parent.children].filter((c) => c.nodeName === node.nodeName);
+        if (siblings.length > 1) part += `:nth-of-type(${siblings.indexOf(node) + 1})`;
+      }
+      chain.unshift(part);
+      if (node.id) {
+        chain[0] = `#${CSS.escape(node.id)}`;
+        break;
+      }
+      node = parent;
+    }
+    return chain.join('>');
+  }
+
+  function isVisible(el) {
+    const st = getComputedStyle(el);
+    if (st.display === 'none' || st.visibility === 'hidden' || Number(st.opacity) === 0) return false;
+    if (st.clipPath === 'inset(50%)') return false;
+    const clip = String(st.clip || '');
+    if (/rect\(\s*0/.test(clip) || clip.includes('rect(1px')) return false;
+    const r = el.getBoundingClientRect();
+    return r.width >= 2 && r.height >= 2;
+  }
+
+  function hasReadableText(el) {
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return true;
+    if (el.tagName === 'SELECT') return true;
+    for (const n of el.childNodes) {
+      if (n.nodeType === Node.TEXT_NODE && String(n.textContent || '').replace(/\s+/g, '').length) return true;
+    }
+    return false;
+  }
+
+  function fontPx(el) {
+    const n = parseFloat(getComputedStyle(el).fontSize);
+    return Number.isFinite(n) ? n : 16;
+  }
+
+  function outermostSmall(el) {
+    let outer = el;
+    let node = el.parentElement;
+    while (node && node !== document.body && node !== document.documentElement) {
+      if (fontPx(node) < MIN_FONT_PX) outer = node;
+      node = node.parentElement;
+    }
+    return outer;
+  }
+
+  function htmlSnippet(el) {
+    const html = String(el.outerHTML || '').replace(/\s+/g, ' ').trim();
+    return html.length > 240 ? `${html.slice(0, 237)}...` : html;
+  }
+
+  const seen = new Set();
+  const issues = [];
+  const nodes = document.body ? document.body.querySelectorAll('*') : [];
+
+  const TARGET_MIN = 24;
+  const MAX_TARGET_ISSUES = 80;
+  const targetEls = document.querySelectorAll(
+    'button, [role="button"], input[type="button"], input[type="submit"], input[type="reset"], input[type="image"], summary',
+  );
+  for (const el of targetEls) {
+    if (issues.length >= MAX_TARGET_ISSUES) break;
+    if (el.closest('[aria-hidden="true"]') || !isVisible(el)) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1) continue;
+    if (r.width >= TARGET_MIN && r.height >= TARGET_MIN) continue;
+    const selector = uniqueSelector(el);
+    const w = Math.round(r.width);
+    const h = Math.round(r.height);
+    issues.push({
+      ruleId: 'target-size',
+      impact: 'serious',
+      help: 'All touch targets must be 24px large, or leave sufficient space',
+      description: 'Ensure touch targets have sufficient size and space',
+      helpUrl: '',
+      tags: ['wcag22aa', 'wcag258'],
+      html: htmlSnippet(el),
+      failureSummary: `Fix any of the following:\n  Target is ${w} by ${h} CSS pixels (needs at least ${TARGET_MIN} by ${TARGET_MIN})`,
+      any: [],
+      target: [selector],
+      selector,
+    });
+  }
+
+  for (const el of nodes) {
+    if (issues.filter((item) => item.ruleId === 'text-size').length >= MAX_TEXT_ISSUES) break;
+    if (SKIP_TAGS.has(el.tagName) || el.closest('svg')) continue;
+    if (el.closest('[aria-hidden="true"]')) continue;
+    if (!hasReadableText(el) || !isVisible(el)) continue;
+    const size = fontPx(el);
+    if (size >= MIN_FONT_PX) continue;
+
+    const target = outermostSmall(el);
+    if (seen.has(target)) continue;
+    seen.add(target);
+
+    const shown = Math.round(fontPx(target) * 10) / 10;
+    const selector = uniqueSelector(target);
+    issues.push({
+      ruleId: 'text-size',
+      impact: 'moderate',
+      help: 'Text is smaller than 12px',
+      description: 'Visible text is below 12 CSS pixels, which is hard to read at default zoom.',
+      helpUrl: '',
+      tags: ['wcag2aa', 'wcag144'],
+      html: htmlSnippet(target),
+      failureSummary: `Fix any of the following:\n  Font size is ${shown}px (needs at least ${MIN_FONT_PX}px)`,
+      any: [],
+      target: [selector],
+      selector,
+    });
+  }
+
+  return issues;
 }
 
 function sleep(ms) {
@@ -80,13 +221,7 @@ async function assertNotBlocked(page) {
  * and document-order bounding boxes for every flagged element.
  */
 export async function scanUrl(url) {
-  const browser = await chromium.launch({
-    headless: true,
-    args:
-      process.env.NODE_ENV === 'production'
-        ? ['--no-sandbox', '--disable-dev-shm-usage']
-        : [],
-  });
+  const browser = await chromium.launch(chromiumLaunchOptions());
   const context = await browser.newContext({
     viewport: VIEWPORT,
     deviceScaleFactor: 1,
@@ -115,8 +250,14 @@ export async function scanUrl(url) {
     await page.evaluate(axe.source);
     const axeResults = await page.evaluate(async () => {
       if (!window.axe) throw new Error('axe-core failed to inject into the page');
-      return await window.axe.run();
+      // target-size is WCAG 2.2 AA (2.5.8, 24px) but disabled in axe by default.
+      return await window.axe.run(document, {
+        rules: {
+          'target-size': { enabled: true },
+        },
+      });
     });
+    const sizeIssues = await page.evaluate(collectSizeIssues);
 
     const screenshotBuffer = await page.screenshot({ fullPage: true, type: 'png' });
     const pageSize = await page.evaluate(() => ({
@@ -141,6 +282,13 @@ export async function scanUrl(url) {
           selector: lastSelector(node.target),
         });
       }
+    }
+    for (const extra of sizeIssues || []) {
+      if (extra.ruleId === 'target-size') {
+        const dup = flagged.some((item) => item.ruleId === 'target-size' && item.selector === extra.selector);
+        if (dup) continue;
+      }
+      flagged.push(extra);
     }
 
     const geometry = await page.evaluate((selectors) => {
@@ -167,11 +315,25 @@ export async function scanUrl(url) {
       });
     }, flagged.map((item) => item.selector));
 
-    const nodes = flagged.map((item, i) => ({
-      ...item,
-      boundingBox: geometry[i].boundingBox,
-      documentIndex: geometry[i].documentIndex,
-    }));
+    const nodes = [];
+    for (let i = 0; i < flagged.length; i += 1) {
+      const item = {
+        ...flagged[i],
+        boundingBox: geometry[i].boundingBox,
+        documentIndex: geometry[i].documentIndex,
+      };
+      if (item.ruleId === 'target-size' && item.boundingBox) {
+        const dup = nodes.some((existing) => {
+          if (existing.ruleId !== 'target-size' || !existing.boundingBox) return false;
+          const a = existing.boundingBox;
+          const b = item.boundingBox;
+          return Math.abs(a.x - b.x) < 2 && Math.abs(a.y - b.y) < 2
+            && Math.abs(a.width - b.width) < 2 && Math.abs(a.height - b.height) < 2;
+        });
+        if (dup) continue;
+      }
+      nodes.push(item);
+    }
 
     return { axeResults, screenshotBuffer, pageSize, nodes };
   } finally {

@@ -6,6 +6,7 @@ import cors from 'cors';
 import express from 'express';
 import { contactConfig, handleContact } from './contact.js';
 import { buildReport } from './reportBuilder.js';
+import { renderReportPdf, sanitizeScanPayload } from './reportPdf.js';
 import { PageBlockedError, scanUrl } from './scanner.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -46,7 +47,7 @@ await fs.mkdir(CONTACT_DIR, { recursive: true });
 const app = express();
 if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
 app.use(cors());
-app.use(express.json({ limit: '32kb' }));
+app.use(express.json({ limit: '2mb' }));
 app.use('/screenshots', express.static(SCREENSHOT_DIR));
 app.use('/illustrations', express.static(path.join(ROOT, 'illustrations')));
 
@@ -56,6 +57,33 @@ function isHttpUrl(value) {
     return parsed.protocol === 'http:' || parsed.protocol === 'https:';
   } catch {
     return false;
+  }
+}
+
+function normalizeScanUrl(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  const candidate = /^https?:\/\//i.test(raw) ? raw : `https://${raw.replace(/^\/\//, '')}`;
+  try {
+    const parsed = new URL(candidate);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return candidate;
+    const host = parsed.hostname;
+    if (
+      host &&
+      host !== 'localhost' &&
+      host.includes('.') &&
+      !host.toLowerCase().startsWith('www.') &&
+      !/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)
+    ) {
+      const parts = host.split('.');
+      const isApex =
+        parts.length === 2 ||
+        (parts.length === 3 && /^(co|com|org|net|gov|ac|edu)$/i.test(parts[1]));
+      if (isApex) parsed.hostname = `www.${host}`;
+    }
+    return parsed.href;
+  } catch {
+    return candidate;
   }
 }
 
@@ -85,6 +113,9 @@ app.get('/request-audit.html', (_req, res) => sendStatic(res, 'request-audit.htm
 app.get('/whats-next.html', (_req, res) => sendStatic(res, 'whats-next.html'));
 app.get('/contact-form.js', (_req, res) => sendStatic(res, 'contact-form.js'));
 app.get('/analytics.js', (_req, res) => sendStatic(res, 'analytics.js'));
+app.get('/report-model.js', (_req, res) => sendStatic(res, 'report-model.js'));
+app.get('/report-layout.js', (_req, res) => sendStatic(res, 'report-layout.js'));
+app.get('/report-ui.js', (_req, res) => sendStatic(res, 'report-ui.js'));
 app.get('/contact/config', (_req, res) => res.json(contactConfig()));
 app.get('/analytics/config', (_req, res) =>
   res.json({
@@ -107,16 +138,17 @@ async function runAudit(url) {
 }
 
 async function handleAudit(req, res, url) {
-  if (!isHttpUrl(url)) {
+  const target = normalizeScanUrl(url);
+  if (!isHttpUrl(target)) {
     return res.status(400).json({ error: 'Provide a valid http(s) URL in { url }.' });
   }
 
   try {
-    const report = await runAudit(url);
+    const report = await runAudit(target);
     res.json(report);
   } catch (err) {
     const detail = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[audit]', url, detail);
+    console.error('[audit]', target, detail);
     const blocked = err instanceof PageBlockedError;
     const unreachable = /net::|ENOTFOUND|ECONNREFUSED|Timeout|timeout|ERR_/i.test(detail);
     res.status(blocked ? 403 : unreachable ? 504 : 502).json({
@@ -149,6 +181,20 @@ app.post('/audit', async (req, res) => {
 app.get('/audit', async (req, res) => {
   const url = typeof req.query?.url === 'string' ? req.query.url.trim() : '';
   await handleAudit(req, res, url);
+});
+
+app.post('/report/pdf', async (req, res) => {
+  const { scan, error } = sanitizeScanPayload(req.body);
+  if (error) return res.status(400).json({ error });
+  try {
+    const { pdf, filename } = await renderReportPdf(scan, SCREENSHOT_DIR);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(pdf);
+  } catch (err) {
+    console.error('[report/pdf]', err);
+    res.status(500).json({ error: "We couldn't generate your PDF. Your scan results haven't been lost. Please try again." });
+  }
 });
 
 const server = app.listen(PORT, HOST, () => {

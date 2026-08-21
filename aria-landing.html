@@ -722,12 +722,37 @@
     });
   })();
 
+  function normalizeScanUrl(value){
+    var raw = String(value || '').trim();
+    if(!raw) return '';
+    var candidate = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw.replace(/^\/\//, '');
+    try {
+      var parsed = new URL(candidate);
+      if(parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return candidate;
+      var host = parsed.hostname;
+      if(
+        host &&
+        host !== 'localhost' &&
+        host.indexOf('.') !== -1 &&
+        host.slice(0, 4).toLowerCase() !== 'www.' &&
+        !/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)
+      ){
+        var parts = host.split('.');
+        var isApex = parts.length === 2 || (parts.length === 3 && /^(co|com|org|net|gov|ac|edu)$/i.test(parts[1]));
+        if(isApex) parsed.hostname = 'www.' + host;
+      }
+      return parsed.href;
+    } catch (err) {
+      return candidate;
+    }
+  }
+
   document.querySelectorAll('form.audit-form').forEach(function(form){
     form.addEventListener('submit', function(e){
       e.preventDefault();
       var raw = ((form.querySelector('input') || {}).value || '').trim();
       if(!raw) return;
-      var url = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
+      var url = normalizeScanUrl(raw);
       window.location.href = 'results.html?url=' + encodeURIComponent(url);
     });
   });
