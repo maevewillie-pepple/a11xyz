@@ -45,16 +45,33 @@ function auditRequestHref() {
   if (!url) return 'request-audit.html';
   return 'request-audit.html?url=' + encodeURIComponent(url);
 }
+function showWaitlistSuccess() {
+  const modal = $('waitlist-modal');
+  const join = $('waitlist-join');
+  const thanks = $('waitlist-thanks');
+  join.hidden = true;
+  thanks.hidden = false;
+  thanks.classList.remove('in');
+  void thanks.offsetWidth;
+  thanks.classList.add('in');
+  modal.setAttribute('aria-labelledby', 'waitlist-success-title');
+  $('waitlist-done').focus();
+}
+
 function openWaitlist() {
   const modal = $('waitlist-modal');
   waitlistFocus = document.activeElement;
   modal.hidden = false;
+  modal.setAttribute('aria-labelledby', 'waitlist-title');
   $('waitlist-error').hidden = true;
   const email = $('waitlist-email');
   email.value = '';
   $('waitlist-name').value = '';
+  $('waitlist-join').hidden = false;
   $('waitlist-form').hidden = false;
-  $('waitlist-thanks').hidden = true;
+  const thanks = $('waitlist-thanks');
+  thanks.hidden = true;
+  thanks.classList.remove('in');
   email.focus();
 }
 
@@ -140,10 +157,7 @@ async function submitWaitlist(event) {
   submit.disabled = true;
   try {
     if (honeypot) {
-      $('waitlist-form').hidden = true;
-      const thanks = $('waitlist-thanks');
-      thanks.hidden = false;
-      thanks.focus();
+      showWaitlistSuccess();
       return;
     }
 
@@ -182,10 +196,7 @@ async function submitWaitlist(event) {
       }),
     }).catch(() => {});
 
-    $('waitlist-form').hidden = true;
-    const thanks = $('waitlist-thanks');
-    thanks.hidden = false;
-    thanks.focus();
+    showWaitlistSuccess();
   } catch {
     errorEl.hidden = false;
     errorEl.textContent = 'Could not send. Email maevepepple@gmail.com instead.';
@@ -216,6 +227,7 @@ export function initReportUi() {
     openWaitlist();
   });
   $('waitlist-close')?.addEventListener('click', closeWaitlist);
+  $('waitlist-done')?.addEventListener('click', closeWaitlist);
   $('waitlist-form')?.addEventListener('submit', submitWaitlist);
 
   const preview = $('report-preview');

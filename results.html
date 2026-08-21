@@ -423,7 +423,57 @@
   }
   .waitlist-actions button[type="submit"]{ background:var(--fg); color:var(--bg); border-color:var(--fg); }
   .waitlist-error{ color:var(--crit); font-size:14px; margin:0 0 12px; }
-  .waitlist-thanks{ margin:0; font-size:15px; }
+  .waitlist-success[hidden], .waitlist-join[hidden]{ display:none !important; }
+  .waitlist-tick{
+    width:44px; height:44px; border-radius:50%;
+    display:grid; place-items:center;
+    background:rgba(30,143,95,0.12); color:#1E8F5F;
+    margin:0 0 14px;
+  }
+  .waitlist-tick svg{ width:22px; height:22px; }
+  .waitlist-tick path{
+    fill:none; stroke:currentColor; stroke-width:2.2;
+    stroke-linecap:round; stroke-linejoin:round;
+  }
+  .waitlist-success h2{ font-size:20px; font-weight:400; letter-spacing:-0.02em; margin:0 0 8px; }
+  .waitlist-success p{ margin:0 0 18px; color:var(--muted); font-size:14px; }
+  .waitlist-success .waitlist-actions button{
+    background:var(--fg); color:var(--bg); border-color:var(--fg);
+  }
+  .waitlist-success.in .waitlist-tick{
+    animation: waitlist-pop 0.4s cubic-bezier(.16,.8,.3,1) both;
+  }
+  .waitlist-success.in .waitlist-tick path{
+    stroke-dasharray: 22;
+    stroke-dashoffset: 22;
+    animation: waitlist-check 0.32s 0.16s ease forwards;
+  }
+  .waitlist-success.in h2{
+    animation: waitlist-rise 0.4s 0.08s cubic-bezier(.16,.8,.3,1) both;
+  }
+  .waitlist-success.in p,
+  .waitlist-success.in .waitlist-actions{
+    animation: waitlist-rise 0.4s 0.14s cubic-bezier(.16,.8,.3,1) both;
+  }
+  @keyframes waitlist-pop{
+    from{ opacity:0; transform:scale(0.72); }
+    to{ opacity:1; transform:scale(1); }
+  }
+  @keyframes waitlist-check{
+    to{ stroke-dashoffset:0; }
+  }
+  @keyframes waitlist-rise{
+    from{ opacity:0; transform:translateY(8px); }
+    to{ opacity:1; transform:none; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .waitlist-success.in .waitlist-tick,
+    .waitlist-success.in .waitlist-tick path,
+    .waitlist-success.in h2,
+    .waitlist-success.in p,
+    .waitlist-success.in .waitlist-actions{ animation:none; }
+    .waitlist-success.in .waitlist-tick path{ stroke-dashoffset:0; }
+  }
   .hp{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
 
   footer{ border-top:1px solid var(--line); padding:18px 0; }
@@ -578,24 +628,37 @@
 
 <div class="waitlist-modal" id="waitlist-modal" hidden role="dialog" aria-modal="true" aria-labelledby="waitlist-title">
   <div class="waitlist-card">
-    <h2 id="waitlist-title">Join the Pro waitlist</h2>
-    <p>Leave your email and we will write when Pro reports are ready.</p>
-    <form id="waitlist-form">
-      <label for="waitlist-name">Name (optional)</label>
-      <input id="waitlist-name" name="name" type="text" autocomplete="name" maxlength="200">
-      <label for="waitlist-email">Email</label>
-      <input id="waitlist-email" name="email" type="email" autocomplete="email" required maxlength="200">
-      <div class="hp" aria-hidden="true">
-        <label for="waitlist-hp">Leave this empty</label>
-        <input id="waitlist-hp" name="a11xyz_hp" type="text" tabindex="-1" autocomplete="off">
+    <div id="waitlist-join">
+      <h2 id="waitlist-title">Join the Pro waitlist</h2>
+      <p>Leave your email and we will write when Pro reports are ready.</p>
+      <form id="waitlist-form">
+        <label for="waitlist-name">Name (optional)</label>
+        <input id="waitlist-name" name="name" type="text" autocomplete="name" maxlength="200">
+        <label for="waitlist-email">Email</label>
+        <input id="waitlist-email" name="email" type="email" autocomplete="email" required maxlength="200">
+        <div class="hp" aria-hidden="true">
+          <label for="waitlist-hp">Leave this empty</label>
+          <input id="waitlist-hp" name="a11xyz_hp" type="text" tabindex="-1" autocomplete="off">
+        </div>
+        <p class="waitlist-error" id="waitlist-error" role="alert" hidden></p>
+        <div class="waitlist-actions">
+          <button type="button" id="waitlist-close">Cancel</button>
+          <button type="submit" id="waitlist-submit">Join waitlist</button>
+        </div>
+      </form>
+    </div>
+    <div class="waitlist-success" id="waitlist-thanks" hidden tabindex="-1">
+      <div class="waitlist-tick" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M5 12.5l4.2 4.2L19 7.5"/>
+        </svg>
       </div>
-      <p class="waitlist-error" id="waitlist-error" role="alert" hidden></p>
+      <h2 id="waitlist-success-title">You're on the list</h2>
+      <p>We'll write when Pro reports are ready. Nothing else to do for now.</p>
       <div class="waitlist-actions">
-        <button type="button" id="waitlist-close">Cancel</button>
-        <button type="submit" id="waitlist-submit">Join waitlist</button>
+        <button type="button" id="waitlist-done">Close</button>
       </div>
-    </form>
-    <p class="waitlist-thanks" id="waitlist-thanks" hidden tabindex="-1">You are on the list. We will email you when Pro is ready.</p>
+    </div>
   </div>
 </div>
 
