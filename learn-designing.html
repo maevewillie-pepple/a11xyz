@@ -77,7 +77,7 @@
   @media (max-width:820px){ .chapter-sidebar{ position:static; flex-direction:row; overflow-x:auto; gap:8px; padding-bottom:6px; } }
   .chapter-tab{ display:flex; align-items:baseline; gap:10px; text-align:left; border:none; background:none; cursor:pointer; font-family:inherit; padding:11px 12px; border-radius:9px; color:var(--muted); font-size:14px; border-left:2px solid transparent; }
   @media (max-width:820px){ .chapter-tab{ white-space:nowrap; border-left:none; border-bottom:2px solid transparent; } }
-  .chapter-tab .num{ font-family:'Geist Mono',monospace; font-size:11.5px; color:var(--muted); flex:0 0 auto; }
+  .chapter-tab .num{ font-family:'Geist Mono',monospace; font-size:12px; color:var(--muted); flex:0 0 auto; }
   .chapter-tab[aria-selected="true"]{ background:var(--bg-raised); color:var(--fg); border-left-color:var(--accent-a); }
   .chapter-tab[aria-selected="true"] .num{ color:var(--accent-a); }
   .chapter-tab:hover:not([aria-selected="true"]){ color:var(--fg); }
@@ -98,18 +98,18 @@
   @media (max-width:560px){ .pour-grid{ grid-template-columns:1fr; } }
   .pour-card{ background:var(--bg-raised); border:1px solid var(--line); border-radius:14px; padding:18px; isolation:isolate; }
   .pour-illo{ width:56px; height:56px; object-fit:contain;  display:block; margin:-8px 0 6px -8px; pointer-events:none; }
-  .pour-card h4{ font-size:14px; font-weight:400; margin:0 0 5px; }
+  .pour-card h3{ font-size:14px; font-weight:400; margin:0 0 5px; }
   .pour-card p{ font-size:12.5px; color:var(--muted); margin:0; line-height:1.5; }
 
   .approach-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:680px; margin-bottom:24px; }
   @media (max-width:560px){ .approach-grid{ grid-template-columns:1fr; } }
   .approach-card{ background:var(--bg-raised); border:1px solid var(--line-strong); border-radius:14px; padding:20px; }
-  .approach-card h4{ font-size:14.5px; font-weight:400; margin:0 0 8px; }
+  .approach-card h3{ font-size:14.5px; font-weight:400; margin:0 0 8px; }
   .approach-card p{ font-size:13px; color:var(--muted); margin:0; line-height:1.6; }
 
   .checklist-group{ margin-bottom:26px; }
   .checklist-group h3{ display:flex; align-items:center; gap:9px; font-size:15px; font-weight:400; margin:0 0 14px; }
-  .checklist-tag{ font-size:10.5px; font-family:'Geist Mono',monospace; color:var(--accent-a); border:1px solid var(--line); border-radius:5px; padding:2px 7px; }
+  .checklist-tag{ font-size:12px; font-family:'Geist Mono',monospace; color:var(--accent-a); border:1px solid var(--line); border-radius:5px; padding:2px 7px; }
   .checklist{ list-style:none; margin:0; padding:0; max-width:620px; display:flex; flex-direction:column; gap:9px; }
   .checklist li{ display:flex; gap:10px; align-items:flex-start; font-size:13.5px; color:var(--muted); line-height:1.55; }
   .check-ic{ flex:0 0 auto; width:17px; height:17px; border-radius:50%; background:var(--good-bg); color:var(--good); display:flex; align-items:center; justify-content:center; margin-top:1px; }
@@ -123,7 +123,7 @@
   .chapter-nav-footer{ display:flex; justify-content:space-between; gap:16px; margin-top:44px; padding-top:24px; border-top:1px solid var(--line); max-width:680px; }
   .goto-btn{ display:flex; flex-direction:column; gap:4px; border:none; background:none; cursor:pointer; font-family:inherit; text-align:left; padding:0; text-decoration:none; }
   .goto-btn.next{ text-align:right; margin-left:auto; }
-  .goto-btn .label{ font-size:11.5px; color:var(--muted); }
+  .goto-btn .label{ font-size:12px; color:var(--muted); }
   .goto-btn .title{ font-size:14px; color:var(--fg); display:flex; align-items:center; gap:6px; }
   .goto-btn.next .title{ justify-content:flex-end; }
   .goto-btn:hover .title{ color:var(--accent-a); }
@@ -173,10 +173,10 @@
         <p>POUR, Perceivable, Operable, Understandable, Robust, is the foundation of inclusive design. It's abstract as a framework, so here's what each principle actually asks of a design.</p>
 
         <div class="pour-grid">
-          <div class="pour-card"><img class="pour-illo" src="illustrations/pour-perceivable.png" alt="" width="128" height="128"><h4>Perceivable</h4><p>Users can process the information on screen regardless of ability, alt text for images, captions for video.</p></div>
-          <div class="pour-card"><img class="pour-illo" src="illustrations/pour-operable.png" alt="" width="128" height="128"><h4>Operable</h4><p>Every interaction works via keyboard or assistive technology, not just a mouse or touchscreen.</p></div>
-          <div class="pour-card"><img class="pour-illo" src="illustrations/pour-understandable.png" alt="" width="128" height="128"><h4>Understandable</h4><p>Clear language, logical navigation, and error feedback that explains what went wrong.</p></div>
-          <div class="pour-card"><img class="pour-illo" src="illustrations/pour-robust.png" alt="" width="128" height="128"><h4>Robust</h4><p>Built on standards, not custom solutions that break as assistive technology evolves.</p></div>
+          <div class="pour-card"><img class="pour-illo" src="illustrations/pour-perceivable.png" alt="" width="128" height="128"><h3>Perceivable</h3><p>Users can process the information on screen regardless of ability, alt text for images, captions for video.</p></div>
+          <div class="pour-card"><img class="pour-illo" src="illustrations/pour-operable.png" alt="" width="128" height="128"><h3>Operable</h3><p>Every interaction works via keyboard or assistive technology, not just a mouse or touchscreen.</p></div>
+          <div class="pour-card"><img class="pour-illo" src="illustrations/pour-understandable.png" alt="" width="128" height="128"><h3>Understandable</h3><p>Clear language, logical navigation, and error feedback that explains what went wrong.</p></div>
+          <div class="pour-card"><img class="pour-illo" src="illustrations/pour-robust.png" alt="" width="128" height="128"><h3>Robust</h3><p>Built on standards, not custom solutions that break as assistive technology evolves.</p></div>
         </div>
 
         <div class="chapter-nav-footer">
@@ -191,11 +191,11 @@
 
         <div class="approach-grid">
           <div class="approach-card">
-            <h4>Universal design</h4>
+            <h3>Universal design</h3>
             <p>Built to work for as many people as possible without adaptation. Adjustable text size or high-contrast modes benefit everyone, not just users with disabilities.</p>
           </div>
           <div class="approach-card">
-            <h4>Targeted assistive features</h4>
+            <h3>Targeted assistive features</h3>
             <p>Built for specific needs, screen readers, switch devices. Essential, but meant to complement universal design, not replace it.</p>
           </div>
         </div>

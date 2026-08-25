@@ -76,7 +76,7 @@
   @media (max-width:820px){ .chapter-sidebar{ position:static; flex-direction:row; overflow-x:auto; gap:8px; padding-bottom:6px; } }
   .chapter-tab{ display:flex; align-items:baseline; gap:10px; text-align:left; border:none; background:none; cursor:pointer; font-family:inherit; padding:11px 12px; border-radius:9px; color:var(--muted); font-size:14px; border-left:2px solid transparent; }
   @media (max-width:820px){ .chapter-tab{ white-space:nowrap; border-left:none; border-bottom:2px solid transparent; } }
-  .chapter-tab .num{ font-family:'Geist Mono',monospace; font-size:11.5px; color:var(--muted); flex:0 0 auto; }
+  .chapter-tab .num{ font-family:'Geist Mono',monospace; font-size:12px; color:var(--muted); flex:0 0 auto; }
   .chapter-tab[aria-selected="true"]{ background:var(--bg-raised); color:var(--fg); border-left-color:var(--accent-a); }
   .chapter-tab[aria-selected="true"] .num{ color:var(--accent-a); }
   .chapter-tab:hover:not([aria-selected="true"]){ color:var(--fg); }
@@ -94,9 +94,9 @@
   .pipe-stage:first-child{ border-radius:12px 0 0 12px; }
   .pipe-stage:last-child{ border-radius:0 12px 12px 0; }
   .pipe-stage:not(:first-child){ border-left:none; }
-  .pipe-stage .n{ font-size:10.5px; font-family:'Geist Mono',monospace; color:var(--accent-a); display:block; margin-bottom:8px; }
-  .pipe-stage h4{ font-size:13px; font-weight:400; margin:0 0 6px; }
-  .pipe-stage p{ font-size:11px; color:var(--muted); margin:0; line-height:1.4; }
+  .pipe-stage .n{ font-size:12px; font-family:'Geist Mono',monospace; color:var(--accent-a); display:block; margin-bottom:8px; }
+  .pipe-stage h3{ font-size:13px; font-weight:400; margin:0 0 6px; }
+  .pipe-stage p{ font-size:12px; color:var(--muted); margin:0; line-height:1.4; }
 
   .handoff-list{ list-style:none; margin:0 0 16px; padding:0; max-width:640px; display:flex; flex-direction:column; gap:9px; }
   .handoff-list li{ font-size:14.5px; color:var(--muted); line-height:1.65; padding-left:18px; position:relative; }
@@ -106,7 +106,7 @@
   .role-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:680px; margin-bottom:24px; }
   @media (max-width:560px){ .role-grid{ grid-template-columns:1fr; } }
   .role-card{ background:var(--bg-raised); border:1px solid var(--line); border-radius:12px; padding:16px 18px; }
-  .role-card h4{ font-size:13.5px; font-weight:400; margin:0 0 5px; }
+  .role-card h3{ font-size:13.5px; font-weight:400; margin:0 0 5px; }
   .role-card p{ font-size:12.5px; color:var(--muted); margin:0; line-height:1.5; }
 
   .callout{ max-width:640px; background:var(--bg-raised); border:1px solid var(--line-strong); border-radius:14px; padding:20px 22px; margin:8px 0 28px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
@@ -117,7 +117,7 @@
   .chapter-nav-footer{ display:flex; justify-content:space-between; gap:16px; margin-top:44px; padding-top:24px; border-top:1px solid var(--line); max-width:680px; }
   .goto-btn{ display:flex; flex-direction:column; gap:4px; border:none; background:none; cursor:pointer; font-family:inherit; text-align:left; padding:0; text-decoration:none; }
   .goto-btn.next{ text-align:right; margin-left:auto; }
-  .goto-btn .label{ font-size:11.5px; color:var(--muted); }
+  .goto-btn .label{ font-size:12px; color:var(--muted); }
   .goto-btn .title{ font-size:14px; color:var(--fg); display:flex; align-items:center; gap:6px; }
   .goto-btn.next .title{ justify-content:flex-end; }
   .goto-btn:hover .title{ color:var(--accent-a); }
@@ -167,12 +167,12 @@
         <p>Accessibility fails most often not because nobody cared, but because it entered the process too late to fix cheaply. It belongs at every stage, not just QA.</p>
 
         <div class="pipeline">
-          <div class="pipe-stage"><span class="n">01</span><h4>Discovery</h4><p>Include disabled users in research, not just as an afterthought.</p></div>
-          <div class="pipe-stage"><span class="n">02</span><h4>Design</h4><p>POUR-checked, annotated for handoff.</p></div>
-          <div class="pipe-stage"><span class="n">03</span><h4>Specification</h4><p>Accessibility requirements written as acceptance criteria.</p></div>
-          <div class="pipe-stage"><span class="n">04</span><h4>Development</h4><p>Built with semantic, native controls first.</p></div>
-          <div class="pipe-stage"><span class="n">05</span><h4>QA</h4><p>Tested against the criteria, not just visually reviewed.</p></div>
-          <div class="pipe-stage"><span class="n">06</span><h4>Release</h4><p>Known issues tracked as debt, not silently dropped.</p></div>
+          <div class="pipe-stage"><span class="n">01</span><h3>Discovery</h3><p>Include disabled users in research, not just as an afterthought.</p></div>
+          <div class="pipe-stage"><span class="n">02</span><h3>Design</h3><p>POUR-checked, annotated for handoff.</p></div>
+          <div class="pipe-stage"><span class="n">03</span><h3>Specification</h3><p>Accessibility requirements written as acceptance criteria.</p></div>
+          <div class="pipe-stage"><span class="n">04</span><h3>Development</h3><p>Built with semantic, native controls first.</p></div>
+          <div class="pipe-stage"><span class="n">05</span><h3>QA</h3><p>Tested against the criteria, not just visually reviewed.</p></div>
+          <div class="pipe-stage"><span class="n">06</span><h3>Release</h3><p>Known issues tracked as debt, not silently dropped.</p></div>
         </div>
 
         <p>The cost of fixing an accessibility issue rises the later it's caught, a missing label costs nothing to add at design time, and considerably more once it's shipped and someone else has to find it.</p>
@@ -209,10 +209,10 @@
         <p>"Accessible" needs a concrete definition, or it quietly becomes optional under deadline pressure.</p>
 
         <div class="role-grid">
-          <div class="role-card"><h4>Design</h4><p>Meets contrast minimums, annotated for handoff, reviewed against the POUR checklist.</p></div>
-          <div class="role-card"><h4>Development</h4><p>Uses semantic or native controls, keyboard operable, correct roles and states exposed.</p></div>
-          <div class="role-card"><h4>QA</h4><p>Tested with keyboard and a screen reader, not just visually reviewed.</p></div>
-          <div class="role-card"><h4>Product</h4><p>Known gaps tracked explicitly as accessibility debt, not silently dropped from scope.</p></div>
+          <div class="role-card"><h3>Design</h3><p>Meets contrast minimums, annotated for handoff, reviewed against the POUR checklist.</p></div>
+          <div class="role-card"><h3>Development</h3><p>Uses semantic or native controls, keyboard operable, correct roles and states exposed.</p></div>
+          <div class="role-card"><h3>QA</h3><p>Tested with keyboard and a screen reader, not just visually reviewed.</p></div>
+          <div class="role-card"><h3>Product</h3><p>Known gaps tracked explicitly as accessibility debt, not silently dropped from scope.</p></div>
         </div>
 
         <p>Accessibility debt is worth naming explicitly, the same way technical debt is. An issue that's tracked and prioritised is very different from one that's simply forgotten because nobody wrote it down.</p>

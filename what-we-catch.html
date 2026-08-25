@@ -116,7 +116,7 @@
     border:1px solid var(--line-strong); display:flex; align-items:center; justify-content:center; flex:0 0 auto;
   }
   .catch-icon svg{width:17px; height:17px; stroke:var(--fg);}
-  .catch-head h3{ font-size:18px; font-weight:400; letter-spacing:-0.01em; margin:0; }
+  .catch-head h2{ font-size:18px; font-weight:400; letter-spacing:-0.01em; margin:0; }
   .catch-left p{ font-size:14px; color:var(--muted); margin:0 0 16px; line-height:1.6; }
   .catch-wcag-list{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
   .catch-wcag{ font-size:12px; color:var(--muted); border:1px solid var(--line); border-radius:6px; padding:4px 9px; }
@@ -129,7 +129,7 @@
     color:#E4E1D6; line-height:1.7;
   }
   .code-line{white-space:pre;}
-  .code-label{ display:flex; align-items:center; gap:6px; font-size:11px; margin-bottom:8px; letter-spacing:0.02em; }
+  .code-label{ display:flex; align-items:center; gap:6px; font-size:12.5px; margin-bottom:8px; letter-spacing:0.02em; }
   .code-label.bad{ color:#F0A18E; }
   .code-label.good{ color:#8FD6B4; }
   .code-label svg{width:12px; height:12px;}
@@ -189,7 +189,7 @@
           <div class="catch-left">
             <div class="catch-head">
               <div class="catch-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 13c1.2 1.5 2.6 2 4 2s2.8-.5 4-2"/><path d="M9 9h.01M15 9h.01"/></svg></div>
-              <h3>Missing ARIA &amp; labels</h3>
+              <h2>Missing ARIA &amp; labels</h2>
             </div>
             <p>Icon buttons, images, and custom controls that have no accessible name, so a screen reader has nothing to announce.</p>
             <div class="catch-wcag-list">
@@ -212,7 +212,7 @@
           <div class="catch-left">
             <div class="catch-head">
               <div class="catch-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="18" rx="1"/><rect x="13" y="3" width="8" height="18" rx="1" fill="currentColor" opacity="0.15"/></svg></div>
-              <h3>Colour contrast</h3>
+              <h2>Colour contrast</h2>
             </div>
             <p>Text or interface elements that don't stand out enough from their background to meet WCAG AA thresholds.</p>
             <div class="catch-wcag-list">
@@ -235,7 +235,7 @@
           <div class="catch-left">
             <div class="catch-head">
               <div class="catch-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 7l2-2a5 5 0 0 0-7-7"/><path d="M14 11a5 5 0 0 0-7-7L5 6a5 5 0 0 0 7 7"/></svg></div>
-              <h3>Vague link text</h3>
+              <h2>Vague link text</h2>
             </div>
             <p>Links that only make sense with their surrounding text, which is a problem for anyone tabbing through a links list.</p>
             <div class="catch-wcag-list">
@@ -258,7 +258,7 @@
           <div class="catch-left">
             <div class="catch-head">
               <div class="catch-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="11" rx="2"/><path d="M7 11h.01M11 11h.01M15 11h.01M8 15h8"/></svg></div>
-              <h3>No keyboard support</h3>
+              <h2>No keyboard support</h2>
             </div>
             <p>Interactive elements built from a div or span instead of a real button or link, so they're invisible to the keyboard.</p>
             <div class="catch-wcag-list">
@@ -281,7 +281,7 @@
           <div class="catch-left">
             <div class="catch-head">
               <div class="catch-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 10h8M8 14h5"/></svg></div>
-              <h3>Unlabelled form fields</h3>
+              <h2>Unlabelled form fields</h2>
             </div>
             <p>Inputs with a placeholder but no real label, so screen reader users aren't told what to enter once they start typing.</p>
             <div class="catch-wcag-list">
@@ -304,7 +304,7 @@
           <div class="catch-left">
             <div class="catch-head">
               <div class="catch-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h13"/></svg></div>
-              <h3>Heading &amp; structure</h3>
+              <h2>Heading &amp; structure</h2>
             </div>
             <p>Skipped heading levels and missing landmarks, which break the shortcuts screen reader users rely on to navigate a page.</p>
             <div class="catch-wcag-list">
